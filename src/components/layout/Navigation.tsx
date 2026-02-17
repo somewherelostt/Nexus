@@ -35,6 +35,7 @@ export function Navigation() {
           </Link>
         )}
       </div>
+      </div>
     </nav>
   );
 }
