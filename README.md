@@ -2,6 +2,8 @@
 
 > **Private Multi-Chain Execution Assistant** — Chat, manage, and move assets on NEAR with natural language.
 
+**[Live App](https://nexus-ai.kaizenn.xyz/)** · **[Docs & overview](https://maazx.notion.site/NexusAI-30a32902e4a3805ea9c9c7469d373802?pvs=74)**
+
 ---
 
 ## The Story
