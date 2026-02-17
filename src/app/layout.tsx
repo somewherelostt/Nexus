@@ -18,6 +18,7 @@ import { ContextProvider } from "@/context/ContextProvider";
 import { WalletProvider } from "@/context/WalletContext";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { TopBar } from "@/components/layout/TopBar";
+import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
 
 export default function RootLayout({
   children,
@@ -31,6 +32,7 @@ export default function RootLayout({
       <body className={cn(inter.variable, "font-sans antialiased bg-background text-foreground min-h-screen selection:bg-accent/30")}>
         <ContextProvider initialState={initialState}>
             <WalletProvider>
+                 <OnboardingModal />
                  <div className="flex min-h-screen">
                     {/* Sidebar Fixed */}
                     <Sidebar />
