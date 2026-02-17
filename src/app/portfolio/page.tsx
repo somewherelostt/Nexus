@@ -95,7 +95,7 @@ function WalletOverviewCard({
               Verified Private Execution
             </span>
             <span className="rounded-full border border-[rgba(255,255,255,0.06)] bg-[#0A0A0F] px-3 py-1 text-xs text-[rgba(255,255,255,0.65)] uppercase tracking-wide">
-              {process.env.NEXT_PUBLIC_NEAR_NETWORK === "mainnet" ? "NEAR Mainnet" : "NEAR Testnet"}
+              NEAR Testnet
             </span>
           </div>
         </div>

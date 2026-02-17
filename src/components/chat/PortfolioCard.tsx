@@ -5,7 +5,6 @@ import { ArrowUpRight } from "lucide-react";
 import { useWallet } from "@/context/WalletContext";
 import { useQuery } from "@tanstack/react-query";
 import { fetchNEARBalance } from "@/lib/near-rpc";
-import { NEAR_NETWORK_ID } from "@/config/near";
 
 export function PortfolioCard() {
   const { accountId, balance } = useWallet();
@@ -21,7 +20,6 @@ export function PortfolioCard() {
 
   const balanceNum = balance != null ? parseFloat(balance) : (accountId ? null : 0);
   const totalUsd = balanceNum != null && nearPrice != null ? balanceNum * nearPrice : null;
-  const networkLabel = NEAR_NETWORK_ID === "mainnet" ? "NEAR Mainnet" : "NEAR Testnet";
 
   if (!accountId) {
     return (
@@ -70,7 +68,7 @@ export function PortfolioCard() {
       </div>
 
       <div className="mt-4 pt-2 border-t border-white/5 text-center">
-        <span className="text-xs text-muted-foreground">{networkLabel}</span>
+        <span className="text-xs text-muted-foreground">NEAR Testnet</span>
       </div>
       <div className="mt-2 text-center">
         <a href="/portfolio" className="text-xs text-purple-400 hover:text-purple-300">Open Full Portfolio →</a>

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useWallet } from "@/context/WalletContext";
-import { NEAR_EXPLORER_URL, NEAR_NETWORK_ID } from "@/config/near";
+import { NEAR_EXPLORER_URL } from "@/config/near";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -72,7 +72,6 @@ export function QuickSend() {
     }
   };
 
-  const networkLabel = NEAR_NETWORK_ID === "mainnet" ? "NEAR Mainnet" : "NEAR Testnet";
 
   return (
     <Card className="bg-zinc-900 border-zinc-800 text-white h-full relative overflow-hidden">
@@ -170,7 +169,7 @@ export function QuickSend() {
                   <div className="h-px bg-zinc-800 my-2" />
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-zinc-500">Network</span>
-                    <span className="text-white">{networkLabel}</span>
+                    <span className="text-white">NEAR Testnet</span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-zinc-500">Est. Gas</span>
