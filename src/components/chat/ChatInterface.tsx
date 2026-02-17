@@ -3,26 +3,37 @@
 import React, { useState, useRef, useEffect } from "react";
 import { PromptCard } from "@/components/chat/PromptCard";
 import { IntentPanel } from "@/components/chat/IntentPanel";
+import { TransactionPreview } from "@/components/chat/TransactionPreview";
+import { PortfolioCard } from "@/components/chat/PortfolioCard";
+import { VaultCard } from "@/components/chat/VaultCard";
 import { NexusButton } from "@/components/ui/NexusButton";
-import { Send, Bot, User, Sparkles } from "lucide-react";
+import { Send, Bot, User, Sparkles, Mic } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { parseIntent } from "@/lib/ai-service";
 
 const STARTER_PROMPTS = [
-    "Send 1 NEAR to alice.near",
-    "Swap 5 NEAR for USDC",
-    "Check my portfolio balance",
-    "Store a file privately in my vault",
-    "Buy crypto with credit card",
-    "Show my transaction history",
-    "What's the price of NEAR?",
-    "Deploy a simple token"
+    "Send 5 NEAR to alice.testnet",
+    "Swap 10 USDC to NEAR",
+    "Show my portfolio",
+    "Store a file privately",
+    "Create a payment link for $50",
+    "Get test NEAR"
+];
+
+const PLACEHOLDERS = [
+    "Send NEAR to alice.testnet...",
+    "Swap 10 USDC to NEAR...",
+    "Store a file privately...",
+    "Create a payment link for $50..."
 ];
 
 interface Message {
     id: string;
     role: "user" | "ai";
-    content: string;
+    type?: "text" | "tx_preview" | "portfolio" | "vault";
+    content: string; // For text
+    data?: any; // For cards
     timestamp: Date;
 }
 
@@ -31,6 +42,7 @@ export function ChatInterface() {
         {
             id: "welcome",
             role: "ai",
+            type: "text",
             content: "Hello. I am NexusAI. What would you like to execute on NEAR today?",
             timestamp: new Date()
         }
@@ -38,8 +50,7 @@ export function ChatInterface() {
     const [inputValue, setInputValue] = useState("");
     const [isTyping, setIsTyping] = useState(false);
     const [showIntents, setShowIntents] = useState(false);
-    
-    // Mock Intent Data State
+    const [currentPlaceholder, setCurrentPlaceholder] = useState(0);
     const [currentIntent, setCurrentIntent] = useState<any>(null);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -52,12 +63,21 @@ export function ChatInterface() {
         scrollToBottom();
     }, [messages, isTyping]);
 
+    // Rotate placeholders
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setCurrentPlaceholder((prev) => (prev + 1) % PLACEHOLDERS.length);
+        }, 3000);
+        return () => clearInterval(interval);
+    }, []);
+
     const handleSendMessage = async (text: string) => {
         if (!text.trim()) return;
 
         const newUserMsg: Message = {
             id: Date.now().toString(),
             role: "user",
+            type: "text",
             content: text,
             timestamp: new Date()
         };
@@ -65,197 +85,236 @@ export function ChatInterface() {
         setMessages(prev => [...prev, newUserMsg]);
         setInputValue("");
         setIsTyping(true);
-        setShowIntents(true); // Open panel on action
+        setShowIntents(true); 
 
-        // Simulate AI processing
+        // AI Processing
+        const intent = await parseIntent(text);
+        
+        // Mock processing time
         setTimeout(() => {
             setIsTyping(false);
             
-            // Mock Response Logic
-            let aiResponse = "I've analyzed your request.";
-            let mockIntent = null;
+            let aiMsg: Message | null = null;
+            let panelIntent = null;
 
-            if (text.toLowerCase().includes("send")) {
-                aiResponse = "I've prepared a transaction to transfer NEAR. Please confirm the details in the panel.";
-                mockIntent = {
-                    parsedIntent: "Transfer 1.0 NEAR to alice.near",
+            if (intent.action === "SEND" || intent.action === "SWAP") {
+                // Show Transaction Preview in Chat + Update Panel
+                aiMsg = {
+                    id: (Date.now() + 1).toString(),
+                    role: "ai",
+                    type: "tx_preview",
+                    content: "",
+                    data: {
+                        action: intent.action,
+                        token: intent.token,
+                        amount: intent.amount,
+                        recipient: intent.recipient,
+                        network: intent.chain,
+                        gas: "0.00025 NEAR"
+                    },
+                    timestamp: new Date()
+                };
+
+                panelIntent = {
+                    parsedIntent: intent.action === "SEND" 
+                        ? `Transfer ${intent.amount} ${intent.token} to ${intent.recipient}`
+                        : `Swap ${intent.amount} TOKENS for ${intent.token}`,
+                    action: intent.action,
+                    token: intent.token,
+                    amount: intent.amount,
+                    recipient: intent.recipient,
+                    gasEstimate: "0.00025",
                     steps: [
-                        { id: 1, label: "Validate Recipient (alice.near)", status: "completed" },
-                        { id: 2, label: "Check Wallet Balance", status: "completed" },
-                        { id: 3, label: "Construct Transaction", status: "ready" },
-                        { id: 4, label: "Sign & Broadcast", status: "pending" }
+                        { id: 1, label: "Query HOT KIT rates", status: "completed" },
+                        { id: 2, label: "Build NEAR Intent", status: "processing" },
+                        { id: 3, label: "Sign via WalletConnect", status: "pending" }
                     ],
-                    gasEstimate: "0.00042",
                     status: "ready"
                 };
-            } else if (text.toLowerCase().includes("swap")) {
-                aiResponse = "I've found the best route for your swap on Ref Finance.";
-                mockIntent = {
-                     parsedIntent: "Swap 5 NEAR for USDC (Ref Finance)",
-                     steps: [
-                        { id: 1, label: "Fetch Routes (Ref Finance)", status: "completed" },
-                        { id: 2, label: "Approve Token Spending", status: "pending" },
-                        { id: 3, label: "Execute Swap", status: "pending" }
-                    ],
-                    gasEstimate: "0.0012",
-                    status: "ready"
+
+            } else if (intent.action === "PORTFOLIO") {
+                aiMsg = {
+                    id: (Date.now() + 1).toString(),
+                    role: "ai",
+                    type: "portfolio",
+                    content: "",
+                    timestamp: new Date()
+                };
+                 panelIntent = {
+                    parsedIntent: "Fetch Portfolio Balance",
+                    action: "QUERY",
+                    steps: [{ id: 1, label: "Fetch Balances", status: "completed" }],
+                    gasEstimate: "0",
+                    status: "completed"
+                };
+
+            } else if (intent.action === "VAULT_UPLOAD") {
+                 aiMsg = {
+                    id: (Date.now() + 1).toString(),
+                    role: "ai",
+                    type: "vault",
+                    content: "",
+                    timestamp: new Date()
+                };
+                 panelIntent = {
+                    parsedIntent: "Access Nova Vault",
+                    action: "ACCESS",
+                    steps: [{ id: 1, label: "Verify Encryption Key", status: "completed" }],
+                    gasEstimate: "0",
+                    status: "completed"
                 };
             } else {
-                 aiResponse = "I can help with that. Could you provide more specific details?";
-                 setShowIntents(false);
+                 aiMsg = {
+                    id: (Date.now() + 1).toString(),
+                    role: "ai",
+                    type: "text",
+                    content: "I can help with transfers, swaps, portfolio checks, or secure file storage. Could you clarify?",
+                    timestamp: new Date()
+                };
             }
 
-            const newAiMsg: Message = {
-                 id: (Date.now() + 1).toString(),
-                 role: "ai",
-                 content: aiResponse,
-                 timestamp: new Date()
-            };
-            setMessages(prev => [...prev, newAiMsg]);
-            setCurrentIntent(mockIntent);
+            if (aiMsg) {
+                setMessages(prev => [...prev, aiMsg!]);
+            }
+            setCurrentIntent(panelIntent);
 
         }, 1500);
     };
 
-    const handleConfirmAction = () => {
-        if (!currentIntent) return;
-        
-        setCurrentIntent((prev: any) => ({ ...prev, status: "executing" }));
-        
-        setTimeout(() => {
-             setCurrentIntent((prev: any) => ({ 
-                 ...prev, 
-                 status: "completed",
-                 steps: prev.steps.map((s: any) => ({ ...s, status: "completed" }))
-             }));
-             
-             setMessages(prev => [...prev, {
-                 id: Date.now().toString(),
-                 role: "ai",
-                 content: "Transaction executed successfully on NEAR Testnet.",
-                 timestamp: new Date()
-             }]);
-        }, 2000);
+    const handleTxConfirm = () => {
+        if (currentIntent) {
+            setCurrentIntent((prev: any) => ({
+                 ...prev,
+                 status: "executing",
+                 steps: prev.steps.map((s: any) => s.label === "Sign via WalletConnect" ? { ...s, status: "processing" } : s)
+            }));
+            
+             setTimeout(() => {
+                setCurrentIntent((prev: any) => ({
+                    ...prev,
+                    status: "completed",
+                    steps: prev.steps.map((s: any) => ({ ...s, status: "completed" }))
+                }));
+             }, 2000);
+        }
     };
 
     return (
-        <div className="flex h-[calc(100vh-8rem)] gap-6">
-            {/* Chat Area */}
+        <div className="flex h-[calc(100vh-8rem)] gap-0">
+            {/* Chat Area - 70% width when panel open */}
             <div className={cn(
-                "flex flex-col h-full transition-all duration-500",
-                showIntents ? "w-[65%]" : "w-full max-w-4xl mx-auto"
+                "flex flex-col h-full transition-all duration-500 bg-[#0F0F1A]",
+                showIntents ? "w-[70%]" : "w-full max-w-4xl mx-auto"
             )}>
                 {/* Messages */}
-                <div className="flex-1 overflow-y-auto space-y-6 pr-4 pb-4 custom-scrollbar">
+                <div className="flex-1 overflow-y-auto space-y-6 px-8 pt-6 pb-6 custom-scrollbar">
                     {messages.map((msg) => (
                         <motion.div
                             key={msg.id}
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             className={cn(
-                                "flex gap-4 max-w-[90%]",
+                                "flex gap-3 max-w-[85%]",
                                 msg.role === "user" ? "ml-auto flex-row-reverse" : "mr-auto"
                             )}
                         >
-                            <div className={cn(
-                                "w-8 h-8 rounded-full flex items-center justify-center shrink-0 shadow-lg",
-                                msg.role === "ai" 
-                                    ? "bg-gradient-to-br from-accent to-accent-glow text-white" 
-                                    : "bg-secondary border border-white/10 text-muted-foreground"
-                            )}>
-                                {msg.role === "ai" ? <Bot className="w-5 h-5" /> : <User className="w-5 h-5" />}
-                            </div>
+                            {/* Avatar */}
+                            {msg.role === "ai" && (
+                                <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg">
+                                     <Bot className="w-5 h-5 text-white" />
+                                </div>
+                            )}
                             
-                            <div className={cn(
-                                "p-4 rounded-2xl text-sm leading-relaxed shadow-sm",
-                                msg.role === "ai" 
-                                    ? "bg-secondary/40 border border-white/5 text-white rounded-tl-none" 
-                                    : "bg-white/5 border border-white/5 text-white/90 rounded-tr-none"
-                            )}>
-                                {msg.content}
+                            {/* Content */}
+                            <div>
+                                {msg.type === "text" && (
+                                    <div className={cn(
+                                        "p-4 rounded-2xl text-[15px] leading-relaxed shadow-sm",
+                                        msg.role === "user" 
+                                            ? "bg-[#1A1A2E] text-white rounded-tr-sm" 
+                                            : "bg-[#1A1A2E] border border-white/5 text-zinc-100 rounded-tl-sm"
+                                    )}>
+                                        {msg.content}
+                                    </div>
+                                )}
+                                
+                                {msg.type === "tx_preview" && msg.data && (
+                                    <TransactionPreview
+                                        action={msg.data.action}
+                                        token={msg.data.token}
+                                        amount={msg.data.amount}
+                                        recipient={msg.data.recipient}
+                                        network={msg.data.network}
+                                        gas={msg.data.gas}
+                                        onConfirm={handleTxConfirm}
+                                        onCancel={() => {}}
+                                    />
+                                )}
+                                
+                                {msg.type === "portfolio" && <PortfolioCard />}
+                                {msg.type === "vault" && <VaultCard />}
                             </div>
                         </motion.div>
                     ))}
 
                     {isTyping && (
-                        <div className="flex gap-4 mr-auto max-w-[90%]">
-                             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-accent to-accent-glow flex items-center justify-center shrink-0 shadow-lg">
+                         <div className="flex gap-3 mr-auto max-w-[90%]">
+                             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shrink-0 shadow-lg">
                                  <Bot className="w-5 h-5 text-white" />
                              </div>
-                             <div className="bg-secondary/40 border border-white/5 px-4 py-3 rounded-2xl rounded-tl-none flex items-center gap-1">
-                                 <span className="w-1.5 h-1.5 bg-accent/50 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-                                 <span className="w-1.5 h-1.5 bg-accent/50 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-                                 <span className="w-1.5 h-1.5 bg-accent/50 rounded-full animate-bounce"></span>
+                             <div className="bg-[#1A1A2E] border border-white/5 px-4 py-3 rounded-2xl rounded-tl-sm flex items-center gap-1">
+                                 <span className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                                 <span className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                                 <span className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce"></span>
                              </div>
                         </div>
                     )}
                     <div ref={messagesEndRef} />
                 </div>
 
-                {/* Initial Prompts Grid (only show if few messages) */}
-                {messages.length === 1 && !isTyping && (
-                    <div className="grid grid-cols-2 gap-4 mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                        {STARTER_PROMPTS.map((prompt, i) => (
-                            <PromptCard 
-                                key={i} 
-                                prompt={prompt} 
-                                onClick={handleSendMessage} 
-                                index={i + 1}
-                            />
-                        ))}
-                    </div>
-                )}
-
                 {/* Input Area */}
-                <div className="mt-4 relative z-20">
-                    <div className="relative group">
-                        <div className="absolute -inset-0.5 bg-gradient-to-r from-accent to-accent-glow rounded-2xl opacity-20 group-hover:opacity-40 transition duration-500 blur"></div>
-                        <div className="relative flex items-center bg-background rounded-2xl border border-white/10 focus-within:border-accent/50 transition-colors shadow-2xl">
-                            <input
-                                type="text"
-                                value={inputValue}
-                                onChange={(e) => setInputValue(e.target.value)}
-                                onKeyDown={(e) => e.key === "Enter" && handleSendMessage(inputValue)}
-                                placeholder="What do you want to accomplish?"
-                                className="flex-1 bg-transparent border-none px-6 py-4 text-white placeholder:text-muted-foreground focus:ring-0 focus:outline-none"
-                            />
-                            <div className="pr-2">
+                <div className="p-6 bg-[#0F0F1A]/80 backdrop-blur-md">
+                     <div className="max-w-4xl mx-auto relative group">
+                        <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-[28px] opacity-20 group-hover:opacity-40 transition duration-500 blur"></div>
+                        <div className="relative flex items-center bg-[#0A0A0F] rounded-[28px] border border-white/10 focus-within:border-indigo-500/50 transition-colors shadow-2xl">
+                             <input
+                                 type="text"
+                                 value={inputValue}
+                                 onChange={(e) => setInputValue(e.target.value)}
+                                 onKeyDown={(e) => e.key === "Enter" && handleSendMessage(inputValue)}
+                                 placeholder={PLACEHOLDERS[currentPlaceholder]}
+                                 className="flex-1 bg-transparent border-none px-6 py-4 text-white placeholder:text-zinc-500 focus:ring-0 focus:outline-none h-14"
+                             />
+                             <div className="pr-2 flex items-center gap-1">
+                                <NexusButton size="icon" variant="ghost" className="rounded-full text-zinc-400 hover:text-white hover:bg-white/5">
+                                    <Mic className="w-5 h-5" />
+                                </NexusButton>
                                 <NexusButton 
                                     size="icon" 
-                                    variant="ghost"
+                                    className="rounded-full bg-indigo-600 hover:bg-indigo-500 text-white w-10 h-10 shadow-lg"
                                     onClick={() => handleSendMessage(inputValue)}
                                     disabled={!inputValue.trim()}
-                                    className="hover:bg-accent/10"
                                 >
-                                    {inputValue.trim() ? (
-                                        <Send className="w-5 h-5 text-accent" />
-                                    ) : (
-                                        <Sparkles className="w-5 h-5 text-muted-foreground" />
-                                    )}
+                                    <Send className="w-4 h-4" />
                                 </NexusButton>
-                            </div>
+                             </div>
                         </div>
-                    </div>
-                    <div className="text-center mt-3">
-                         <span className="text-[10px] text-muted-foreground/60 uppercase tracking-widest">
-                            NexusAI Protocol v1.0 • Testnet
-                         </span>
-                    </div>
+                     </div>
                 </div>
             </div>
 
-            {/* Intent Panel (Right Side) */}
+            {/* Context Panel - 30% width */}
             <AnimatePresence>
                 {showIntents && (
                     <motion.div 
                         initial={{ opacity: 0, x: 20, width: 0 }}
-                        animate={{ opacity: 1, x: 0, width: "35%" }}
+                        animate={{ opacity: 1, x: 0, width: "30%" }}
                         exit={{ opacity: 0, x: 20, width: 0 }}
-                        className="h-full rounded-2xl overflow-hidden shadow-2xl border border-white/5"
+                        className="h-full border-l border-white/5 bg-[#0F0F1A] shadow-2xl relative z-10"
                     >
                         <IntentPanel 
                             intent={currentIntent} 
-                            onConfirm={handleConfirmAction}
+                            onConfirm={handleTxConfirm}
                             onCancel={() => {
                                 setShowIntents(false);
                                 setCurrentIntent(null);
