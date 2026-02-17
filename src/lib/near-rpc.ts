@@ -5,7 +5,7 @@
  * @see https://docs.near.org/tools/ecosystem-apis/nearblocks
  */
 
-const NEAR_RPC_URL = process.env.NEXT_PUBLIC_NEAR_NODE_URL || "https://rpc.testnet.near.org";
+const NEAR_RPC_URL = process.env.NEXT_PUBLIC_NEAR_NODE_URL || "https://rpc.testnet.fastnear.com";
 const NEAR_INDEXER_BASE = process.env.NEXT_PUBLIC_NEAR_INDEXER_URL || "https://api-testnet.nearblocks.io";
 const NEAR_INDEXER_API_KEY = process.env.NEARBLOCKS_API_KEY || "";
 
@@ -34,7 +34,20 @@ export interface NearBlocksTx {
 }
 
 /** Fetch NEAR balance for account (in NEAR) via RPC view_account. */
+/** In the browser we use our API proxy to avoid CORS / "Failed to fetch". */
 export async function fetchNEARBalance(accountId: string): Promise<number> {
+  if (typeof window !== "undefined") {
+    const res = await fetch(
+      `/api/near/balance?accountId=${encodeURIComponent(accountId)}`
+    );
+    const data = await res.json();
+    if (!res.ok) {
+      if (data.error?.includes("does not exist")) return 0;
+      throw new Error(data.error || "Failed to fetch balance");
+    }
+    return Number(data.balance ?? 0);
+  }
+
   const res = await fetch(NEAR_RPC_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

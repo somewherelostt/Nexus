@@ -8,7 +8,7 @@ const NOVA_API_KEY = (
 const CONTRACT_ID =
   (process.env.NEXT_PUBLIC_NOVA_CONTRACT_ID ?? "").trim() || "nova-sdk.near";
 const RPC_URL =
-  process.env.NEXT_PUBLIC_NEAR_NODE_URL ?? "https://rpc.testnet.near.org";
+  process.env.NEXT_PUBLIC_NEAR_NODE_URL ?? "https://rpc.testnet.fastnear.com";
 
 export async function POST(request: NextRequest) {
   if (!NOVA_API_KEY) {

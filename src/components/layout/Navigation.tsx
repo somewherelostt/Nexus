@@ -9,7 +9,7 @@ import Link from "next/link";
 import { truncateAddress } from "@/lib/utils";
 
 export function Navigation() {
-  const { accountId, signIn, signOut, loading: isLoading } = useWallet();
+  const { accountId, signIn, signOut, loading: isLoading, error: walletError, retry } = useWallet();
   const [copied, setCopied] = useState(false);
 
   const copyToClipboard = async () => {
@@ -53,9 +53,17 @@ export function Navigation() {
              </NexusButton>
           </div>
         ) : (
-          <NexusButton variant="primary" size="sm" onClick={signIn} className="shadow-nexus-glow-sm" disabled={isLoading}>
-            {isLoading ? "Loading..." : "Connect Wallet"}
-          </NexusButton>
+          <div className="flex items-center gap-2">
+            {walletError && (
+              <>
+                <span className="text-xs text-amber-400/90 max-w-[160px] truncate" title={walletError}>{walletError}</span>
+                <NexusButton variant="secondary" size="sm" onClick={retry}>Retry</NexusButton>
+              </>
+            )}
+            <NexusButton variant="primary" size="sm" onClick={signIn} className="shadow-nexus-glow-sm" disabled={isLoading}>
+              {isLoading ? "Loading..." : "Connect Wallet"}
+            </NexusButton>
+          </div>
         )}
       </div>
       </div>
