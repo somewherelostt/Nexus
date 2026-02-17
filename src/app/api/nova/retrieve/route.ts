@@ -43,9 +43,10 @@ export async function POST(request: NextRequest) {
       rpcUrl: RPC_URL,
     });
     const result = await sdk.retrieve(groupId!.trim(), ipfsHash!.trim());
-    const bytes = Buffer.isBuffer(result.data)
+    const raw = Buffer.isBuffer(result.data)
       ? result.data
       : Buffer.from(result.data as ArrayBuffer);
+    const bytes = new Uint8Array(raw);
     return new NextResponse(bytes, {
       headers: {
         "Content-Type": "application/octet-stream",
