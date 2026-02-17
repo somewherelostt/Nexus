@@ -79,7 +79,7 @@ export default function LandingPage() {
             href="/chat"
             className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-white/50 hover:text-white border border-white/10 hover:border-white/20 px-4 py-2 rounded-sm transition-colors"
           >
-            Compare options <ArrowRight className="w-3.5 h-3.5" />
+             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </motion.div>
 
