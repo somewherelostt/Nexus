@@ -8,6 +8,7 @@ import { setupMyNearWallet } from "@near-wallet-selector/my-near-wallet";
 import { setupEthereumWallets } from "@near-wallet-selector/ethereum-wallets";
 import "@near-wallet-selector/modal-ui/styles.css";
 import { NEAR_NETWORK_ID, NEAR_CONTRACT_ID } from "../config/near";
+import { fetchNEARBalance } from "../lib/near-rpc";
 import { config } from "../config/wagmi";
 import { createWeb3Modal } from "@web3modal/wagmi/react";
 
@@ -16,6 +17,7 @@ interface WalletContextType {
   modal: WalletSelectorModal | null;
   accounts: AccountState[];
   accountId: string | null;
+  balance: string | null;
   signIn: () => void;
   signOut: () => void;
   loading: boolean;
@@ -27,6 +29,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   const [selector, setSelector] = useState<WalletSelector | null>(null);
   const [modal, setModal] = useState<WalletSelectorModal | null>(null);
   const [accounts, setAccounts] = useState<AccountState[]>([]);
+  const [balance, setBalance] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
   const init = useCallback(async () => {
@@ -79,6 +82,18 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
 
   const accountId = useMemo(() => accounts[0]?.accountId || null, [accounts]);
 
+  useEffect(() => {
+    if (!accountId) {
+      setBalance(null);
+      return;
+    }
+    let cancelled = false;
+    fetchNEARBalance(accountId).then((n) => {
+      if (!cancelled) setBalance(n.toFixed(4));
+    });
+    return () => { cancelled = true; };
+  }, [accountId]);
+
   const signIn = () => {
     modal?.show();
   };
@@ -96,6 +111,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
         modal,
         accounts,
         accountId,
+        balance,
         signIn,
         signOut,
         loading,

@@ -14,7 +14,7 @@ export function WalletBadge() {
     <div className="flex items-center gap-4 bg-secondary/50 border border-white/5 rounded-full px-4 py-1.5 h-10 backdrop-blur-sm">
         {/* Balance */}
         <div className="text-sm font-medium text-white/90">
-            {balance ? parseFloat(balance).toFixed(2) : "0"} NEAR
+            {balance != null ? Number(balance).toFixed(2) : "0"} NEAR
         </div>
 
         {/* Separator */}
