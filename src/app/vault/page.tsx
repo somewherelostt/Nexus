@@ -1,16 +1,22 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useWallet } from "@/context/WalletContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  fetchVaultTransactions,
   getVaultGroupId,
   vaultKeyFingerprint,
   truncateHash,
+  fetchVaultTransactions,
   type NovaTransaction,
 } from "@/lib/vault-nova";
+import {
+  isNovaSdkAvailable,
+  uploadWithNovaSdk,
+  listVaultWithNovaSdk,
+  retrieveWithNovaSdk,
+} from "@/services/nova-sdk-client";
 import {
   Dialog,
   DialogContent,
@@ -368,15 +374,26 @@ function AIInteractionBar() {
 export default function VaultPage() {
   const { accountId } = useWallet();
   const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [viewingTx, setViewingTx] = useState<NovaTransaction | null>(null);
+  const [viewError, setViewError] = useState<string | null>(null);
 
   const groupId = accountId ? getVaultGroupId(accountId) : "";
   const keyFingerprint = accountId ? vaultKeyFingerprint(accountId) : "—";
+  const useSdk = isNovaSdkAvailable();
 
   const { data: transactions = [], isLoading: txLoading } = useQuery({
-    queryKey: ["vault-transactions", accountId],
-    queryFn: () => (accountId ? fetchVaultTransactions(accountId) : Promise.resolve([])),
+    queryKey: ["vault-transactions", accountId, useSdk],
+    queryFn: () =>
+      accountId
+        ? useSdk
+          ? listVaultWithNovaSdk(accountId)
+          : fetchVaultTransactions(accountId)
+        : Promise.resolve([]),
     enabled: !!accountId,
   });
 
@@ -385,17 +402,72 @@ export default function VaultPage() {
   const lastSynced = txLoading ? "—" : "Just now";
 
   const handleAddToVault = () => setAddModalOpen(true);
-  const handleEncryptStore = () => setUploadModalOpen(true);
+  const handleEncryptStore = () => {
+    setUploadError(null);
+    setUploadModalOpen(true);
+  };
 
-  const handleView = (_tx: NovaTransaction) => {
-    // TODO: open viewer / decrypt flow
-  };
+  const handleFileSelect = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file || !accountId) return;
+      if (!useSdk) {
+        setUploadError("Set NEXT_PUBLIC_NOVA_API_KEY (from nova-sdk.com) to use Encrypt & Store.");
+        return;
+      }
+      setUploading(true);
+      setUploadError(null);
+      try {
+        await uploadWithNovaSdk(accountId, file);
+        queryClient.invalidateQueries({ queryKey: ["vault-transactions", accountId, useSdk] });
+        setUploadModalOpen(false);
+      } catch (err) {
+        setUploadError(err instanceof Error ? err.message : "Upload failed.");
+      } finally {
+        setUploading(false);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      }
+    },
+    [accountId, useSdk, queryClient]
+  );
+
+  const handleView = useCallback(
+    async (tx: NovaTransaction) => {
+      if (!accountId || !useSdk) {
+        setViewError("NOVA API key required to view files. Add NEXT_PUBLIC_NOVA_API_KEY.");
+        setViewingTx(tx);
+        return;
+      }
+      if (!tx.ipfs_hash || tx.ipfs_hash === "local" || (!tx.ipfs_hash.startsWith("Qm") && !tx.ipfs_hash.startsWith("bafy"))) {
+        setViewError("Cannot view this entry.");
+        setViewingTx(tx);
+        return;
+      }
+      setViewingTx(tx);
+      setViewError(null);
+      try {
+        const { data } = await retrieveWithNovaSdk(accountId, tx.group_id, tx.ipfs_hash);
+        const blob = new Blob([data]);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `vault-${tx.file_hash.slice(0, 8)}.bin`;
+        a.click();
+        URL.revokeObjectURL(url);
+        setViewingTx(null);
+      } catch (err) {
+        setViewError(err instanceof Error ? err.message : "Retrieve failed.");
+      }
+    },
+    [accountId, useSdk]
+  );
+
   const handleShare = (_tx: NovaTransaction) => {
-    // TODO: share access flow
+    // TODO: share access flow (SDK: addGroupMember)
   };
-  const handleDelete = (_tx: NovaTransaction) => {
-    // TODO: delete from vault (contract + local)
-    queryClient.invalidateQueries({ queryKey: ["vault-transactions", accountId] });
+
+  const handleDelete = (tx: NovaTransaction) => {
+    queryClient.invalidateQueries({ queryKey: ["vault-transactions", accountId, useSdk] });
   };
 
   return (
@@ -423,7 +495,7 @@ export default function VaultPage() {
             />
           </div>
           <div className="lg:max-w-sm">
-            <UploadPanel onEncryptStore={handleEncryptStore} disabled={!accountId} />
+            <UploadPanel onEncryptStore={handleEncryptStore} disabled={!accountId || !useSdk} />
           </div>
         </div>
 
@@ -464,7 +536,7 @@ export default function VaultPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={uploadModalOpen} onOpenChange={setUploadModalOpen}>
+      <Dialog open={uploadModalOpen} onOpenChange={(open) => { setUploadModalOpen(open); if (!open) setUploadError(null); }}>
         <DialogContent
           className="border bg-[#0A0A0F] text-white"
           style={{ borderColor: BORDER }}
@@ -472,16 +544,59 @@ export default function VaultPage() {
           <DialogHeader>
             <DialogTitle className="text-white">Encrypt & Store</DialogTitle>
             <DialogDescription style={{ color: MUTED }}>
-              Files are encrypted client-side via NOVA before upload. Requires NEAR wallet and vault registration.
+              Choose a file. It will be encrypted in your browser before storage.
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4">
-            <p className="text-sm" style={{ color: MUTED_65 }}>
-              Production upload uses NOVA SDK with wallet signing and Pinata IPFS. Connect wallet and ensure vault group is registered.
+          <div className="py-4 space-y-4">
+            <input
+              ref={fileInputRef}
+              type="file"
+              className="hidden"
+              onChange={handleFileSelect}
+              disabled={!accountId || uploading}
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={!accountId || uploading}
+              className="w-full flex items-center justify-center gap-2 rounded-xl border-2 border-dashed py-8 transition-colors hover:border-[#6C5CE7] hover:bg-white/5 disabled:opacity-50"
+              style={{ borderColor: BORDER }}
+            >
+              <Upload className="h-8 w-8" style={{ color: MUTED_65 }} />
+              <span className="text-sm font-medium text-white">
+                {uploading ? "Encrypting…" : "Choose file to encrypt"}
+              </span>
+            </button>
+            {uploadError && (
+              <p className="text-sm text-red-400">{uploadError}</p>
+            )}
+            <p className="text-xs" style={{ color: MUTED }}>
+              {useSdk
+                ? "Files are encrypted and stored via NOVA SDK (IPFS + NEAR)."
+                : "Set NEXT_PUBLIC_NOVA_API_KEY from nova-sdk.com to enable Encrypt & Store."}
             </p>
           </div>
           <DialogFooter>
             <NexusButton variant="secondary" onClick={() => setUploadModalOpen(false)}>
+              Close
+            </NexusButton>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!viewingTx} onOpenChange={(open) => { if (!open) { setViewingTx(null); setViewError(null); } }}>
+        <DialogContent
+          className="border bg-[#0A0A0F] text-white"
+          style={{ borderColor: BORDER }}
+        >
+          <DialogHeader>
+            <DialogTitle className="text-white">View file</DialogTitle>
+            <DialogDescription style={{ color: MUTED }}>
+              {viewError ? viewError : "Decrypting and downloading…"}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <NexusButton variant="secondary" onClick={() => { setViewingTx(null); setViewError(null); }}>
               Close
             </NexusButton>
           </DialogFooter>
