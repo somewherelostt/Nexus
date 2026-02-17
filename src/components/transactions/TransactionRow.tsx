@@ -4,6 +4,7 @@ import { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { ArrowUpRight, ArrowDownLeft, RefreshCw, Box, ExternalLink, ChevronDown, CheckCircle2, XCircle, Clock } from "lucide-react";
 import { Transaction } from "@/lib/near-rpc";
+import { NEAR_EXPLORER_URL } from "@/config/near";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -24,14 +25,16 @@ export function TransactionRow({ tx, accountId }: TransactionRowProps) {
     let amount = "";
 
     const action = tx.actions[0];
-
-    if (tx.signer_id === accountId && action.action === "TRANSFER") {
+    if (!action) {
+      detailsPrimary = "Transaction";
+      detailsSecondary = tx.hash.substring(0, 8) + "...";
+    } else if (tx.signer_id === accountId && action.action === "TRANSFER") {
         type = "SEND";
         icon = <ArrowUpRight className="w-4 h-4" />;
         typeColor = "text-red-400 bg-red-400/10 border-red-400/20";
         detailsPrimary = `Sent to ${tx.receiver_id.length > 15 ? tx.receiver_id.substring(0, 15)+ "..." : tx.receiver_id}`;
         detailsSecondary = "Transfer";
-        const nearAmount = action.deposit ? (parseInt(action.deposit) / 1e24).toFixed(2) : "0";
+        const nearAmount = action.deposit ? (Number(action.deposit) / 1e24).toFixed(2) : "0";
         amount = `-${nearAmount} NEAR`;
     } else if (tx.receiver_id === accountId && action.action === "TRANSFER") {
         type = "RECEIVE";
@@ -39,9 +42,9 @@ export function TransactionRow({ tx, accountId }: TransactionRowProps) {
         typeColor = "text-green-400 bg-green-400/10 border-green-400/20";
         detailsPrimary = `Received from ${tx.signer_id.length > 15 ? tx.signer_id.substring(0, 15)+ "..." : tx.signer_id}`;
         detailsSecondary = "Transfer";
-        const nearAmount = action.deposit ? (parseInt(action.deposit) / 1e24).toFixed(2) : "0";
+        const nearAmount = action.deposit ? (Number(action.deposit) / 1e24).toFixed(2) : "0";
         amount = `+${nearAmount} NEAR`;
-    } else if (action.method === "swap") {
+    } else if (action?.method === "swap") {
         type = "SWAP";
         icon = <RefreshCw className="w-4 h-4" />;
         typeColor = "text-purple-400 bg-purple-400/10 border-purple-400/20";
@@ -51,7 +54,7 @@ export function TransactionRow({ tx, accountId }: TransactionRowProps) {
          type = "CONTRACT";
          icon = <Box className="w-4 h-4" />;
          typeColor = "text-blue-400 bg-blue-400/10 border-blue-400/20";
-         detailsPrimary = `Call: ${action.method}`;
+         detailsPrimary = action ? `Call: ${action.method ?? "Unknown"}` : "Contract";
          detailsSecondary = tx.receiver_id;
     }
 
@@ -91,7 +94,7 @@ export function TransactionRow({ tx, accountId }: TransactionRowProps) {
                     {amount && (
                         <>
                             <div className={cn("font-medium text-sm", type === "SEND" ? "text-white" : "text-green-400")}>{amount}</div>
-                            <div className="text-xs text-zinc-600">~${Math.abs(parseFloat(amount) * 6.5).toFixed(2)}</div>
+                            <div className="text-xs text-zinc-600">~${Math.abs(parseFloat(amount.replace(/[^0-9.-]/g, "")) * 6.5).toFixed(2)}</div>
                         </>
                     )}
                 </div>
@@ -118,7 +121,7 @@ export function TransactionRow({ tx, accountId }: TransactionRowProps) {
                  {/* Explorer Actions */}
                  <div className="col-span-3 md:col-span-1 flex justify-end">
                     <a 
-                        href={`https://testnet.nearblocks.io/txns/${tx.hash}`}
+                        href={`${NEAR_EXPLORER_URL}/txns/${tx.hash}`}
                         target="_blank"
                         rel="noreferrer"
                         onClick={(e) => e.stopPropagation()}

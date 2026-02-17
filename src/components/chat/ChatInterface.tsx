@@ -11,9 +11,10 @@ import { Send, Bot, User, Sparkles, Mic } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { parseIntent } from "@/lib/ai-service";
+import { useWallet } from "@/context/WalletContext";
 
 const STARTER_PROMPTS = [
-    "Send 5 NEAR to alice.testnet",
+    "Send 5 NEAR to [address]",
     "Swap 10 USDC to NEAR",
     "Show my portfolio",
     "Store a file privately",
@@ -22,10 +23,10 @@ const STARTER_PROMPTS = [
 ];
 
 const PLACEHOLDERS = [
-    "Send NEAR to alice.testnet...",
+    "Send NEAR to a friend...",
     "Swap 10 USDC to NEAR...",
     "Store a file privately...",
-    "Create a payment link for $50..."
+    "Create a payment link..."
 ];
 
 interface Message {
@@ -38,6 +39,7 @@ interface Message {
 }
 
 export function ChatInterface() {
+    const { selector } = useWallet();
     const [messages, setMessages] = useState<Message[]>([
         {
             id: "welcome",
@@ -90,7 +92,6 @@ export function ChatInterface() {
         // AI Processing
         const intent = await parseIntent(text);
         
-        // Mock processing time
         setTimeout(() => {
             setIsTyping(false);
             
@@ -181,22 +182,25 @@ export function ChatInterface() {
         }, 1500);
     };
 
-    const handleTxConfirm = () => {
+    const makeTxConfirmHandler = (data: { amount?: string; recipient?: string; token?: string } | null) => async (): Promise<string | void> => {
+        if (!selector || !data?.recipient || !data?.amount) return;
+        const amt = parseFloat(data.amount || "0");
+        if (isNaN(amt) || amt <= 0) return;
+        const wallet = await selector.wallet();
+        const amountYocto = BigInt(Math.floor(amt * 1e24)).toString();
+        const result = await wallet.signAndSendTransaction({
+            receiverId: data.recipient,
+            actions: [{ type: "Transfer", params: { deposit: amountYocto } }],
+        });
+        const hash = (result as { transaction?: { hash?: string } })?.transaction?.hash ?? (result as { transaction_outcome?: { id?: string } })?.transaction_outcome?.id ?? (result as { receipts_outcome?: { id?: string }[] })?.receipts_outcome?.[0]?.id ?? "";
         if (currentIntent) {
             setCurrentIntent((prev: any) => ({
-                 ...prev,
-                 status: "executing",
-                 steps: prev.steps.map((s: any) => s.label === "Sign via WalletConnect" ? { ...s, status: "processing" } : s)
+                ...prev,
+                status: "completed",
+                steps: (prev?.steps ?? []).map((s: any) => ({ ...s, status: "completed" })),
             }));
-            
-             setTimeout(() => {
-                setCurrentIntent((prev: any) => ({
-                    ...prev,
-                    status: "completed",
-                    steps: prev.steps.map((s: any) => ({ ...s, status: "completed" }))
-                }));
-             }, 2000);
         }
+        return hash;
     };
 
     return (
@@ -246,8 +250,8 @@ export function ChatInterface() {
                                         recipient={msg.data.recipient}
                                         network={msg.data.network}
                                         gas={msg.data.gas}
-                                        onConfirm={handleTxConfirm}
-                                        onCancel={() => {}}
+                                        onConfirm={makeTxConfirmHandler(msg.data)}
+                                        onCancel={() => setCurrentIntent(null)}
                                     />
                                 )}
                                 
@@ -314,7 +318,7 @@ export function ChatInterface() {
                     >
                         <IntentPanel 
                             intent={currentIntent} 
-                            onConfirm={handleTxConfirm}
+                            onConfirm={currentIntent?.recipient != null ? makeTxConfirmHandler(currentIntent) : () => {}}
                             onCancel={() => {
                                 setShowIntents(false);
                                 setCurrentIntent(null);

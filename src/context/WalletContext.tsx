@@ -34,9 +34,13 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
 
   const init = useCallback(async () => {
     try {
+      const projectId = process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID;
+      if (!projectId) {
+        console.warn("NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID is not set. WalletConnect may not work.");
+      }
       const web3Modal = createWeb3Modal({
         wagmiConfig: config,
-        projectId: process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID || 'c0fec857183e87834731305710d0c3f7',
+        projectId: projectId || '',
       });
 
       const _selector = await setupWalletSelector({

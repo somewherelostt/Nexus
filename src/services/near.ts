@@ -1,15 +1,13 @@
-import { setupWalletSelector, NetworkId, WalletSelector, AccountState } from "@near-wallet-selector/core";
+import { setupWalletSelector, WalletSelector } from "@near-wallet-selector/core";
 import { setupModal, WalletSelectorModal } from "@near-wallet-selector/modal-ui";
 import { setupMyNearWallet } from "@near-wallet-selector/my-near-wallet";
 import "@near-wallet-selector/modal-ui/styles.css";
-
-const NETWORK_ID: NetworkId = "testnet";
+import { NEAR_NETWORK_ID, NEAR_CONTRACT_ID } from "../config/near";
 
 export class NearService {
   selector: WalletSelector | null = null;
   modal: WalletSelectorModal | null = null;
-  
-  // Singleton instance
+
   private static instance: NearService;
 
   private constructor() {}
@@ -27,14 +25,12 @@ export class NearService {
     }
 
     this.selector = await setupWalletSelector({
-      network: NETWORK_ID,
-      modules: [
-        setupMyNearWallet(),
-      ],
+      network: NEAR_NETWORK_ID,
+      modules: [setupMyNearWallet()],
     });
 
     this.modal = setupModal(this.selector, {
-      contractId: "", // Optional: specific app contract
+      contractId: NEAR_CONTRACT_ID,
     });
 
     return { selector: this.selector, modal: this.modal };

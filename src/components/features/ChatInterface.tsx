@@ -40,7 +40,6 @@ export function ChatInterface() {
     setInput("");
     setIsTyping(true);
     
-    // Simulate response (placeholder)
     setTimeout(() => {
       setIsTyping(false);
       setMessages(prev => [...prev, {

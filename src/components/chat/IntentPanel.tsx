@@ -39,7 +39,7 @@ export function IntentPanel({ intent, onConfirm, onCancel }: IntentPanelProps) {
                 </div>
                 <h3 className="text-lg font-medium text-white mb-2">Awaiting Command</h3>
                 <p className="text-sm text-zinc-500 max-w-[250px]">
-                    I'm listening. Try "Send 5 NEAR to alice.testnet" or "Swap USDC for NEAR".
+                    I'm listening. Try "Send 5 NEAR to [address]" or "Swap USDC for NEAR".
                 </p>
             </div>
         );

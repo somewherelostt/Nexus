@@ -95,7 +95,7 @@ function WalletOverviewCard({
               Verified Private Execution
             </span>
             <span className="rounded-full border border-[rgba(255,255,255,0.06)] bg-[#0A0A0F] px-3 py-1 text-xs text-[rgba(255,255,255,0.65)] uppercase tracking-wide">
-              NEAR Testnet
+              {process.env.NEXT_PUBLIC_NEAR_NETWORK === "mainnet" ? "NEAR Mainnet" : "NEAR Testnet"}
             </span>
           </div>
         </div>
@@ -133,10 +133,19 @@ function TokenHoldingsTable({
     queryFn: () => (accountId ? fetchNEARBalance(accountId) : Promise.resolve(0)),
     enabled: !!accountId,
   });
+  const { data: nearPrice } = useQuery({
+    queryKey: ["near-price"],
+    queryFn: async () => {
+      const res = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=near-protocol&vs_currencies=usd");
+      const data = await res.json();
+      return (data?.["near-protocol"]?.usd as number) ?? 0;
+    },
+    staleTime: 60_000,
+  });
 
   const tokens: { symbol: string; balance: string; valueUsd: number; change24h: number | null }[] = [];
-  if (accountId && balance != null && balance > 0) {
-    const valueUsd = balance * (3.5);
+  if (accountId && balance != null && balance > 0 && nearPrice != null) {
+    const valueUsd = balance * nearPrice;
     if (!hideDust || valueUsd >= 1) {
       tokens.push({
         symbol: "NEAR",

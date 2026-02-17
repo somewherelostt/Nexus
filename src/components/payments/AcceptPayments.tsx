@@ -14,10 +14,13 @@ export function AcceptPayments() {
   const [isCopied, setIsCopied] = useState(false);
 
   const handleGenerateLink = () => {
-    // Mock PingPay Link Generation
-    const baseUrl = "https://pay.pingpay.io/link";
+    const baseUrl = process.env.NEXT_PUBLIC_HOT_PAY_LINK_BASE_URL;
+    if (!baseUrl) {
+      setGeneratedLink("");
+      return;
+    }
     const uniqueId = Math.random().toString(36).substring(7);
-    const link = `${baseUrl}/${uniqueId}?amount=${amount}&desc=${encodeURIComponent(description)}`;
+    const link = `${baseUrl.replace(/\/$/, "")}/${uniqueId}?amount=${encodeURIComponent(amount || "0")}&desc=${encodeURIComponent(description)}`;
     setGeneratedLink(link);
   };
 
@@ -74,9 +77,13 @@ export function AcceptPayments() {
              </div>
         </div>
 
+        {!process.env.NEXT_PUBLIC_HOT_PAY_LINK_BASE_URL && (
+          <p className="text-sm text-amber-400">Set NEXT_PUBLIC_HOT_PAY_LINK_BASE_URL to generate HOT Pay payment links.</p>
+        )}
         <Button 
             className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-medium h-12"
             onClick={handleGenerateLink}
+            disabled={!process.env.NEXT_PUBLIC_HOT_PAY_LINK_BASE_URL}
         >
             Generate Payment Link
         </Button>

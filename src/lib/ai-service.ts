@@ -19,7 +19,7 @@ export async function parseIntent(text: string): Promise<ParsedIntent> {
         // "send 5 NEAR to alice.testnet"
         const amount = lower.match(/(\d+(\.\d+)?)/)?.[0] || "0";
         const token = lower.includes("usdc") ? "USDC" : "NEAR";
-        const recipient = lower.match(/to\s+(\S+)/)?.[1] || "alice.testnet";
+        const recipient = lower.match(/to\s+(\S+)/)?.[1] || undefined;
         
         return {
             action: "SEND",

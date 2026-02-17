@@ -42,9 +42,13 @@ export class AIService {
       }
       
       if (action.type === "AGENT_ACTION") {
+          const agentAction = {
+              type: (action.params?.actionType ?? "STAKE") as "TRANSFER" | "SWAP" | "STAKE" | "DEPLOY_CONTRACT",
+              params: action.params?.params ?? action.params ?? {},
+          };
           return await shadeAgentService.executeAgentAction(
-              action.params.agentId, 
-              { type: "STAKE", params: { amount: "10" } } 
+              action.params.agentId,
+              agentAction
           );
       }
       

@@ -4,9 +4,8 @@
  * Upload requires signer + Pinata (backend or wallet sign flow).
  */
 
-import { NEAR_NODE_URL } from "@/config/near";
+import { NEAR_NODE_URL, NOVA_CONTRACT_ID } from "@/config/near";
 
-const NOVA_CONTRACT_TESTNET = "nova-sdk-6.testnet";
 const NEXUS_VAULT_GROUP_PREFIX = "nexus-vault";
 
 export interface NovaTransaction {
@@ -43,7 +42,7 @@ async function nearViewCall<T>(method: string, args: Record<string, string>): Pr
       method: "query",
       params: {
         request_type: "call_function",
-        account_id: NOVA_CONTRACT_TESTNET,
+        account_id: NOVA_CONTRACT_ID,
         method_name: method,
         args_base64: toBase64(JSON.stringify(args)),
         finality: "final",
@@ -73,10 +72,11 @@ async function nearViewCall<T>(method: string, args: Record<string, string>): Pr
   }
 }
 
-/** Fetch file list for user's vault group from NOVA contract. */
+/** Fetch file list for user's vault group from NOVA contract. Requires NEXT_PUBLIC_NOVA_CONTRACT_ID. */
 export async function fetchVaultTransactions(
   accountId: string
 ): Promise<NovaTransaction[]> {
+  if (!NOVA_CONTRACT_ID) return [];
   const groupId = getVaultGroupId(accountId);
   try {
     const list = await nearViewCall<NovaTransaction[]>("get_transactions_for_group", {

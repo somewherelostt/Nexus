@@ -215,7 +215,7 @@ export function OnboardingModal() {
                             <div className="space-y-1">
                                 <h3 className="text-xl font-bold text-white">Wallet Connected!</h3>
                                 <p className="text-zinc-400 font-mono bg-zinc-950 px-3 py-1 rounded border border-zinc-800 text-sm">
-                                    alice.testnet
+                                    yourname.testnet
                                 </p>
                             </div>
                             
