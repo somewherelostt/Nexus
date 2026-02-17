@@ -1,15 +1,31 @@
-import { setupWalletSelector, NetworkId } from "@near-wallet-selector/core";
-import { setupModal } from "@near-wallet-selector/modal-ui";
+import { setupWalletSelector, NetworkId, WalletSelector, AccountState } from "@near-wallet-selector/core";
+import { setupModal, WalletSelectorModal } from "@near-wallet-selector/modal-ui";
 import { setupMyNearWallet } from "@near-wallet-selector/my-near-wallet";
 import "@near-wallet-selector/modal-ui/styles.css";
 
-const NETWORK_ID: NetworkId = "testnet"; // or 'mainnet'
+const NETWORK_ID: NetworkId = "testnet";
 
 export class NearService {
-  selector: any;
-  modal: any;
+  selector: WalletSelector | null = null;
+  modal: WalletSelectorModal | null = null;
+  
+  // Singleton instance
+  private static instance: NearService;
 
-  async init() {
+  private constructor() {}
+
+  public static getInstance(): NearService {
+    if (!NearService.instance) {
+      NearService.instance = new NearService();
+    }
+    return NearService.instance;
+  }
+
+  async init(): Promise<{ selector: WalletSelector; modal: WalletSelectorModal }> {
+    if (this.selector && this.modal) {
+      return { selector: this.selector, modal: this.modal };
+    }
+
     this.selector = await setupWalletSelector({
       network: NETWORK_ID,
       modules: [
@@ -18,51 +34,37 @@ export class NearService {
     });
 
     this.modal = setupModal(this.selector, {
-      contractId: "v1.signer-prod.testnet", // MPC Contract
+      contractId: "", // Optional: specific app contract
     });
-    
+
     return { selector: this.selector, modal: this.modal };
   }
 
-  async executeMPCAction(action: any): Promise<string> {
-      if (!this.selector) throw new Error("Wallet not initialized");
-      
-      const wallet = await this.selector.wallet();
-      const accountId = (await wallet.getAccounts())[0].accountId;
+  async signIn() {
+    if (!this.modal) await this.init();
+    this.modal?.show();
+  }
 
-      // 1. Derivation Path for the target chain (e.g., ETH)
-      const path = "ethereum,1"; 
-      
-      // 2. This would normally require constructing an RLP-encoded ETH transaction
-      // For this implementation, we will call the sign method with a payload
-      // representing the hash of the transaction we want to sign.
-      
-      // MOCK DATA for the "Real" call structure to avoid needing 'ethers' or 'rlp' deps which might fail install
-      const payload = Array.from(new Uint8Array(32).fill(1)); 
-      
-      const outcome = await wallet.signAndSendTransaction({
-          signerId: accountId,
-          receiverId: "v1.signer-prod.testnet",
-          actions: [
-              {
-                  type: "FunctionCall",
-                  params: {
-                      methodName: "sign",
-                      args: {
-                          payload: payload,
-                          path: path,
-                          key_version: 0,
-                      },
-                      gas: "300000000000000", // 300 Tgas
-                      deposit: "250000000000000000000000", // 0.25 NEAR (Standard deposit for MPC sign)
-                  }
-              }
-          ]
+  async signOut() {
+    if (!this.selector) await this.init();
+    const wallet = await this.selector?.wallet();
+    await wallet?.signOut();
+  }
+
+  async getAccountId(): Promise<string | null> {
+      if (!this.selector) await this.init();
+      const accounts = this.selector?.store.getState().accounts;
+      return accounts?.[0]?.accountId || null;
+  }
+
+  async signAndSendTransaction(receiverId: string, actions: any[]) {
+      if (!this.selector) await this.init();
+      const wallet = await this.selector?.wallet();
+      return await wallet?.signAndSendTransaction({
+          receiverId,
+          actions
       });
-
-      console.log("MPC Transaction Outcome:", outcome);
-      return outcome.transaction.hash;
   }
 }
 
-export const nearService = new NearService();
+export const nearService = NearService.getInstance();

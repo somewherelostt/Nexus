@@ -7,40 +7,24 @@ export interface AgentAction {
 
 export class ShadeAgentService {
     /**
-     * Deploys a new Shade Agent (mock implementation based on docs concepts)
-     * In reality, this would deploy a contract or initialize a TEE context.
+     * Deploys a new Shade Agent
      */
     async deployAgent(name: string): Promise<string> {
-        console.log(`Deploying Shade Agent: ${name}...`);
-        // Mock deployment handling
-        // 1. Create a sub-account or TEE session
-        // 2. Deploy agent contract code
-        
-        // For now, return a mock address
-        return `${name}.agent.testnet`;
+        throw new Error("Shade Protocol integration requires mainnet contract deployment. Not available in this demo.");
     }
 
     /**
      * Executing an action through the Shade Agent
-     * @param agentId The address/ID of the agent
-     * @param action The action to perform
      */
     async executeAgentAction(agentId: string, action: AgentAction): Promise<string> {
-        console.log(`Agent ${agentId} executing action:`, action);
-        
-        // This would interact with the deployed agent contract or TEE
-        // using nearService to sign the request if needed (or agent signs itself if autonomous)
-        
-        // Mock successful transaction hash
-        return "ConGrAtuLaTioNsThIsIsAHaShOfAcTiOn"; 
+        throw new Error("Shade Agent execution requires a deployed agent. Not available.");
     }
 
     /**
      * Lists available agents for the current user
      */
     async listAgents(ownerId: string): Promise<string[]> {
-        // Mock retrieval
-        return [`agent1.${ownerId}`, `agent2.${ownerId}`];
+        return [];
     }
 }
 

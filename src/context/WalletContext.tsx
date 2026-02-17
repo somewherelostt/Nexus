@@ -1,65 +1,83 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { setupWalletSelector } from "@near-wallet-selector/core";
-import { setupModal } from "@near-wallet-selector/modal-ui";
+import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from "react";
+import { map, distinctUntilChanged } from "rxjs";
+import { setupWalletSelector, NetworkId, WalletSelector, AccountState } from "@near-wallet-selector/core";
+import { setupModal, WalletSelectorModal } from "@near-wallet-selector/modal-ui";
 import { setupMyNearWallet } from "@near-wallet-selector/my-near-wallet";
+import { setupEthereumWallets } from "@near-wallet-selector/ethereum-wallets";
 import "@near-wallet-selector/modal-ui/styles.css";
+import { NEAR_NETWORK_ID, NEAR_CONTRACT_ID } from "../config/near";
+import { config } from "../config/wagmi";
+import { createWeb3Modal } from "@web3modal/wagmi/react";
 
-// Basic interface for context
 interface WalletContextType {
-  selector: any;
-  modal: any;
+  selector: WalletSelector | null;
+  modal: WalletSelectorModal | null;
+  accounts: AccountState[];
   accountId: string | null;
   signIn: () => void;
   signOut: () => void;
+  loading: boolean;
 }
 
 const WalletContext = createContext<WalletContextType | null>(null);
 
 export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
-  const [selector, setSelector] = useState<any>(null);
-  const [modal, setModal] = useState<any>(null);
-  const [accountId, setAccountId] = useState<string | null>(null);
+  const [selector, setSelector] = useState<WalletSelector | null>(null);
+  const [modal, setModal] = useState<WalletSelectorModal | null>(null);
+  const [accounts, setAccounts] = useState<AccountState[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  const init = useCallback(async () => {
+    try {
+      const web3Modal = createWeb3Modal({
+        wagmiConfig: config,
+        projectId: process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID || 'c0fec857183e87834731305710d0c3f7',
+      });
+
+      const _selector = await setupWalletSelector({
+        network: NEAR_NETWORK_ID,
+        modules: [
+            setupMyNearWallet(),
+            setupEthereumWallets({ wagmiConfig: config, web3Modal })
+        ],
+      });
+
+      const _modal = setupModal(_selector, {
+        contractId: NEAR_CONTRACT_ID,
+      });
+
+      const state = _selector.store.getState();
+      setAccounts(state.accounts);
+
+      // Subscribe to changes
+      const subscription = _selector.store.observable
+        .pipe(
+          map((state) => state.accounts),
+          distinctUntilChanged()
+        )
+        .subscribe((nextAccounts) => {
+          setAccounts(nextAccounts);
+        });
+
+      setSelector(_selector);
+      setModal(_modal);
+      setLoading(false);
+
+      return () => subscription.unsubscribe();
+
+    } catch (err) {
+      console.error("Failed to initialise wallet selector", err);
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const initWallet = async () => {
-      try {
-        const _selector = await setupWalletSelector({
-          network: "testnet",
-          modules: [setupMyNearWallet()],
-        });
+    init();
+  }, [init]);
 
-        const _modal = setupModal(_selector, {
-          contractId: "guest-book.testnet", // Placeholder
-        });
-
-        const state = _selector.store.getState();
-        
-        setSelector(_selector);
-        setModal(_modal);
-
-        // Check if already signed in
-        if (state.accounts.length > 0) {
-          setAccountId(state.accounts[0].accountId);
-        }
-
-        // Subscribe to changes
-        _selector.store.observable.subscribe((state) => {
-            if (state.accounts.length > 0) {
-                setAccountId(state.accounts[0].accountId);
-            } else {
-                setAccountId(null);
-            }
-        });
-
-      } catch (err) {
-        console.error("Failed to init wallet", err);
-      }
-    };
-
-    initWallet();
-  }, []);
+  const accountId = useMemo(() => accounts[0]?.accountId || null, [accounts]);
 
   const signIn = () => {
     modal?.show();
@@ -72,7 +90,17 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <WalletContext.Provider value={{ selector, modal, accountId, signIn, signOut }}>
+    <WalletContext.Provider
+      value={{
+        selector,
+        modal,
+        accounts,
+        accountId,
+        signIn,
+        signOut,
+        loading,
+      }}
+    >
       {children}
     </WalletContext.Provider>
   );
@@ -85,3 +113,4 @@ export const useWallet = () => {
   }
   return context;
 };
+
