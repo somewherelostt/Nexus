@@ -16,7 +16,8 @@ import { headers } from "next/headers";
 import { ContextProvider } from "@/context/ContextProvider";
 
 import { WalletProvider } from "@/context/WalletContext";
-import { Navigation } from "@/components/layout/Navigation";
+import { Sidebar } from "@/components/layout/Sidebar";
+import { TopBar } from "@/components/layout/TopBar";
 
 export default function RootLayout({
   children,
@@ -30,10 +31,20 @@ export default function RootLayout({
       <body className={cn(inter.variable, "font-sans antialiased bg-background text-foreground min-h-screen selection:bg-accent/30")}>
         <ContextProvider initialState={initialState}>
             <WalletProvider>
-                 <Navigation />
-                 <main className="container mx-auto px-4 md:px-6 pt-20">
-                    {children}
-                 </main>
+                 <div className="flex min-h-screen">
+                    {/* Sidebar Fixed */}
+                    <Sidebar />
+                    
+                    {/* Main Content Area */}
+                    <div className="flex-1 ml-64 flex flex-col min-h-screen relative">
+                        {/* Top Bar Fixed/Sticky */}
+                         <TopBar />
+                         
+                        <main className="flex-1 px-8 pt-24 pb-12 overflow-y-auto">
+                            {children}
+                        </main>
+                    </div>
+                 </div>
             </WalletProvider>
         </ContextProvider>
       </body>
