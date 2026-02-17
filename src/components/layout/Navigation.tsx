@@ -13,7 +13,11 @@ export function Navigation() {
         Nexus<span className="text-accent">AI</span>
       </Link>
       
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-6">
+          <Link href="/memory" className="text-sm text-muted-foreground hover:text-accent transition-colors">
+            Memory Vault
+          </Link>
+          <div className="flex items-center gap-4">
         {accountId ? (
           <div className="flex items-center gap-4">
              <div className="text-sm font-mono text-muted-foreground/80 px-3 py-1 bg-white/5 rounded-full border border-white/5">
