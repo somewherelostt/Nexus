@@ -11,13 +11,13 @@ export const metadata: Metadata = {
 
 export default function PaymentsPage() {
   return (
-    <main className="min-h-screen bg-black text-white p-4 md:p-8 pt-24">
+    <main className="min-h-full text-foreground">
       <div className="max-w-7xl mx-auto space-y-8">
         <header className="mb-8">
-          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-zinc-500">
-            Payments Reference
+          <h1 className="text-3xl font-semibold tracking-tight text-white">
+            Payments
           </h1>
-          <p className="text-zinc-400 mt-2">
+          <p className="text-muted-foreground mt-2">
             Securely send assets and accept payments via HOT Pay & PingPay.
           </p>
         </header>
@@ -40,10 +40,10 @@ export default function PaymentsPage() {
             <div className="lg:col-span-5 flex flex-col gap-6">
                 <PaymentHistory />
                 <div className="hidden lg:block">
-                     <div className="bg-gradient-to-br from-purple-900/20 to-blue-900/20 border border-zinc-800/50 p-6 rounded-2xl">
+                     <div className="card-origin p-6">
                         <h3 className="font-semibold text-white mb-2">Nexus Premium</h3>
-                        <p className="text-sm text-zinc-400 mb-4">Unlock advanced analytics and lower transaction fees with Nexus Premium.</p>
-                        <button className="text-sm font-medium text-purple-400 hover:text-purple-300">Upgrade Now &rarr;</button>
+                        <p className="text-sm text-muted-foreground mb-4">Unlock advanced analytics and lower transaction fees with Nexus Premium.</p>
+                        <button className="text-sm font-medium text-accent hover:text-accent/80">Upgrade Now →</button>
                      </div>
                 </div>
             </div>

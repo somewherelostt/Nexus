@@ -31,7 +31,7 @@ export function AcceptPayments() {
   };
 
   return (
-    <Card className="bg-zinc-900 border-zinc-800 text-white h-full relative overflow-hidden">
+    <Card className="card-origin text-card-foreground h-full relative overflow-hidden">
         <div className="absolute top-0 right-0 p-4 opacity-10">
             <QrCode className="w-24 h-24" />
         </div>

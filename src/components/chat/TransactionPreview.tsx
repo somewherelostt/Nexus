@@ -1,7 +1,6 @@
 "use client";
 
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { ArrowRight, Check, ExternalLink, Zap, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { NEAR_EXPLORER_URL } from "@/config/near";
@@ -45,69 +44,83 @@ export function TransactionPreview({
   };
 
   return (
-    <Card className="bg-[#0A0A0F] border border-accent/20 max-w-sm w-full p-4 rounded-xl shadow-[0_0_15px_-5px_var(--tw-shadow-color)] shadow-accent/10">
+    <Card className="max-w-sm w-full rounded-sm border border-white/[0.08] bg-[var(--origin-surface)] overflow-hidden hover:border-white/[0.12]">
       {!txHash ? (
         <>
-          <div className="flex justify-between mb-4 border-b border-white/5 pb-2">
+          <div className="flex justify-between items-center px-4 py-3 border-b border-white/[0.06] bg-white/[0.02]">
             <div className="flex items-center gap-2">
-              <Zap className="w-4 h-4 text-accent" />
-              <span className="text-sm font-medium text-white">{action}</span>
+              <Zap className="w-4 h-4 text-[#A855F7]" />
+              <span className="font-mono text-xs uppercase tracking-widest text-white/90">
+                Simulating Transaction
+              </span>
             </div>
-            <span className="text-xs text-muted-foreground bg-white/5 px-2 py-0.5 rounded">{network}</span>
+            <span className="font-mono text-[10px] uppercase tracking-widest text-white/50">
+              {network}
+            </span>
           </div>
 
-          <div className="space-y-3 mb-4">
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">Amount</span>
-              <span className="text-lg font-bold text-white">{amount} <small className="text-xs font-normal text-muted-foreground">{token}</small></span>
+          <div className="p-4 space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-white/50 uppercase tracking-wide">Amount</span>
+              <span className="font-mono text-base text-white token-amount">
+                {amount} <span className="text-white/50 font-mono text-sm">{token}</span>
+              </span>
             </div>
             {recipient && (
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">To</span>
-                <span className="text-sm font-mono text-zinc-300 break-all">{recipient}</span>
+              <div className="flex justify-between items-start gap-2">
+                <span className="text-xs text-white/50 uppercase tracking-wide shrink-0">To</span>
+                <span className="font-mono text-xs text-white/80 break-all text-right">{recipient}</span>
               </div>
             )}
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">Est. Gas</span>
-              <span className="text-sm text-accent">{gas}</span>
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-white/50 uppercase tracking-wide">Est. Gas</span>
+              <span className="font-mono text-sm gas-amount text-[#A855F7]">{gas}</span>
             </div>
           </div>
 
           {error && (
-            <p className="text-sm text-red-400 mb-2">{error}</p>
+            <p className="px-4 pb-2 text-xs text-red-400 font-mono">{error}</p>
           )}
 
-          <div className="flex gap-2 pt-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="flex-1 text-muted-foreground hover:text-white"
+          <div className="flex gap-2 px-4 pb-4">
+            <button
+              type="button"
+              className="flex-1 font-mono text-xs uppercase tracking-widest h-9 border border-white/10 text-white/70 hover:text-white hover:border-white/20 rounded-sm transition-colors"
               onClick={onCancel}
               disabled={confirmed}
             >
               Cancel
-            </Button>
-            <Button
-              size="sm"
-              className="flex-1 bg-accent hover:bg-accent/80 text-white"
+            </button>
+            <button
+              type="button"
+              className="flex-1 font-mono text-xs uppercase tracking-widest h-9 border border-[#A855F7]/50 bg-[#A855F7]/10 text-[#A855F7] hover:shadow-[0_2px_0_0_rgba(168,85,247,0.4)] rounded-sm transition-all disabled:opacity-50 inline-flex items-center justify-center gap-1"
               onClick={handleConfirm}
               disabled={confirmed}
             >
-              {confirmed ? <><Loader2 className="w-4 h-4 animate-spin mr-1" /> Signing...</> : "Confirm"}
-            </Button>
+              {confirmed ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  Signing...
+                </>
+              ) : (
+                "Confirm"
+              )}
+            </button>
           </div>
         </>
       ) : (
-        <div className="text-center py-4">
-          <div className="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-3 text-green-500">
-            <Check className="w-6 h-6" />
+        <div className="text-center py-6 px-4">
+          <div className="w-10 h-10 bg-emerald-500/20 border border-emerald-500/30 rounded-sm flex items-center justify-center mx-auto mb-3 text-emerald-400">
+            <Check className="w-5 h-5" />
           </div>
-          <h4 className="text-white font-medium mb-1">Transaction Sent</h4>
+          <h4 className="font-mono text-xs uppercase tracking-widest text-white mb-2">
+            Transaction Sent
+          </h4>
           <a
             href={`${NEAR_EXPLORER_URL}/txns/${txHash}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-accent text-xs hover:underline flex items-center justify-center gap-1"
+            className="font-mono text-[10px] text-[#A855F7] hover:underline inline-flex items-center justify-center gap-1"
           >
             View on Explorer <ExternalLink className="w-3 h-3" />
           </a>

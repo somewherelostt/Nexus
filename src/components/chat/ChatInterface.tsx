@@ -6,8 +6,7 @@ import { IntentPanel } from "@/components/chat/IntentPanel";
 import { TransactionPreview } from "@/components/chat/TransactionPreview";
 import { PortfolioCard } from "@/components/chat/PortfolioCard";
 import { VaultCard } from "@/components/chat/VaultCard";
-import { NexusButton } from "@/components/ui/NexusButton";
-import { Send, Bot, User, Sparkles, Mic } from "lucide-react";
+import { Send, Bot, Mic } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { parseIntent } from "@/lib/ai-service";
@@ -211,14 +210,14 @@ export function ChatInterface() {
     };
 
     return (
-        <div className="flex h-[calc(100vh-8rem)] gap-0">
-            {/* Chat Area - 70% width when panel open */}
+        <div className="flex h-[calc(100vh-8rem)] gap-0 bg-[var(--origin-background)]">
+            {/* Chat Area */}
             <div className={cn(
-                "flex flex-col h-full transition-all duration-500 bg-[#0F0F1A]",
+                "flex flex-col h-full transition-all duration-500 bg-[var(--origin-background)]",
                 showIntents ? "w-[70%]" : "w-full max-w-4xl mx-auto"
             )}>
                 {/* Messages */}
-                <div className="flex-1 overflow-y-auto space-y-6 px-8 pt-6 pb-6 custom-scrollbar">
+                <div className="flex-1 overflow-y-auto space-y-6 px-6 pt-6 pb-4">
                     {messages.map((msg) => (
                         <motion.div
                             key={msg.id}
@@ -229,26 +228,24 @@ export function ChatInterface() {
                                 msg.role === "user" ? "ml-auto flex-row-reverse" : "mr-auto"
                             )}
                         >
-                            {/* Avatar */}
                             {msg.role === "ai" && (
-                                <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg">
-                                     <Bot className="w-5 h-5 text-white" />
+                                <div className="w-8 h-8 rounded-sm border border-white/10 bg-white/5 flex items-center justify-center shrink-0">
+                                    <Bot className="w-4 h-4 text-[#A855F7]" />
                                 </div>
                             )}
-                            
-                            {/* Content */}
-                            <div>
+                            <div className={cn("min-w-0", msg.role === "user" && "flex justify-end")}>
                                 {msg.type === "text" && (
-                                    <div className={cn(
-                                        "p-4 rounded-2xl text-[15px] leading-relaxed shadow-sm",
-                                        msg.role === "user" 
-                                            ? "bg-[#1A1A2E] text-white rounded-tr-sm" 
-                                            : "bg-[#1A1A2E] border border-white/5 text-zinc-100 rounded-tl-sm"
-                                    )}>
+                                    <div
+                                        className={cn(
+                                            "py-2",
+                                            msg.role === "user"
+                                                ? "font-mono text-xs text-white/90 text-right"
+                                                : "border-l-2 border-[#A855F7] pl-4 text-sm text-white/85 leading-relaxed"
+                                        )}
+                                    >
                                         {msg.content}
                                     </div>
                                 )}
-                                
                                 {msg.type === "tx_preview" && msg.data && (
                                     <TransactionPreview
                                         action={msg.data.action}
@@ -261,7 +258,6 @@ export function ChatInterface() {
                                         onCancel={() => setCurrentIntent(null)}
                                     />
                                 )}
-                                
                                 {msg.type === "portfolio" && <PortfolioCard />}
                                 {msg.type === "vault" && <VaultCard />}
                             </div>
@@ -269,48 +265,51 @@ export function ChatInterface() {
                     ))}
 
                     {isTyping && (
-                         <div className="flex gap-3 mr-auto max-w-[90%]">
-                             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shrink-0 shadow-lg">
-                                 <Bot className="w-5 h-5 text-white" />
-                             </div>
-                             <div className="bg-[#1A1A2E] border border-white/5 px-4 py-3 rounded-2xl rounded-tl-sm flex items-center gap-1">
-                                 <span className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-                                 <span className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-                                 <span className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce"></span>
-                             </div>
+                        <div className="flex gap-3 mr-auto max-w-[90%]">
+                            <div className="w-8 h-8 rounded-sm border border-white/10 bg-white/5 flex items-center justify-center shrink-0">
+                                <Bot className="w-4 h-4 text-[#A855F7]" />
+                            </div>
+                            <div className="h-8 flex items-center gap-1 border-l-2 border-[#A855F7] pl-4">
+                                <span className="loader-pulse-bar w-16" />
+                            </div>
                         </div>
                     )}
                     <div ref={messagesEndRef} />
                 </div>
 
-                {/* Input Area */}
-                <div className="p-6 bg-[#0F0F1A]/80 backdrop-blur-md">
-                     <div className="max-w-4xl mx-auto relative group">
-                        <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-[28px] opacity-20 group-hover:opacity-40 transition duration-500 blur"></div>
-                        <div className="relative flex items-center bg-[#0A0A0F] rounded-[28px] border border-white/10 focus-within:border-indigo-500/50 transition-colors shadow-2xl">
-                             <input
-                                 type="text"
-                                 value={inputValue}
-                                 onChange={(e) => setInputValue(e.target.value)}
-                                 onKeyDown={(e) => e.key === "Enter" && handleSendMessage(inputValue)}
-                                 placeholder={PLACEHOLDERS[currentPlaceholder]}
-                                 className="flex-1 bg-transparent border-none px-6 py-4 text-white placeholder:text-zinc-500 focus:ring-0 focus:outline-none h-14"
-                             />
-                             <div className="pr-2 flex items-center gap-1">
-                                <NexusButton size="icon" variant="ghost" className="rounded-full text-zinc-400 hover:text-white hover:bg-white/5">
-                                    <Mic className="w-5 h-5" />
-                                </NexusButton>
-                                <NexusButton 
-                                    size="icon" 
-                                    className="rounded-full bg-indigo-600 hover:bg-indigo-500 text-white w-10 h-10 shadow-lg"
-                                    onClick={() => handleSendMessage(inputValue)}
-                                    disabled={!inputValue.trim()}
-                                >
-                                    <Send className="w-4 h-4" />
-                                </NexusButton>
-                             </div>
+                {/* CLI-style Input */}
+                <div className="p-4 border-t border-white/[0.06] bg-[var(--origin-background)]">
+                    <div className="max-w-4xl mx-auto flex items-center bg-[#050505] border border-white/[0.08] rounded-sm focus-within:border-white/20 transition-colors">
+                        <span className="pl-4 font-mono text-xs text-white/40 select-none">$</span>
+                        <input
+                            type="text"
+                            value={inputValue}
+                            onChange={(e) => setInputValue(e.target.value)}
+                            onKeyDown={(e) => e.key === "Enter" && handleSendMessage(inputValue)}
+                            placeholder={PLACEHOLDERS[currentPlaceholder]}
+                            className={cn(
+                                "flex-1 bg-transparent border-none px-2 py-3.5 text-sm text-white placeholder:text-white/30 focus:ring-0 focus:outline-none font-mono",
+                                !inputValue && "caret-blink"
+                            )}
+                        />
+                        <div className="pr-2 flex items-center gap-1">
+                            <button
+                                type="button"
+                                className="p-2 text-white/40 hover:text-white hover:bg-white/5 rounded-sm transition-colors"
+                                aria-label="Voice"
+                            >
+                                <Mic className="w-4 h-4" />
+                            </button>
+                            <button
+                                type="button"
+                                className="font-mono text-xs uppercase tracking-widest h-9 px-3 border border-[#A855F7]/40 text-[#A855F7] hover:shadow-[0_2px_0_0_rgba(168,85,247,0.4)] rounded-sm transition-all disabled:opacity-50 disabled:pointer-events-none"
+                                onClick={() => handleSendMessage(inputValue)}
+                                disabled={!inputValue.trim()}
+                            >
+                                <Send className="w-4 h-4" />
+                            </button>
                         </div>
-                     </div>
+                    </div>
                 </div>
             </div>
 
@@ -321,7 +320,7 @@ export function ChatInterface() {
                         initial={{ opacity: 0, x: 20, width: 0 }}
                         animate={{ opacity: 1, x: 0, width: "30%" }}
                         exit={{ opacity: 0, x: 20, width: 0 }}
-                        className="h-full border-l border-white/5 bg-[#0F0F1A] shadow-2xl relative z-10"
+                        className="h-full border-l border-white/[0.06] bg-[var(--origin-background)] relative z-10"
                     >
                         <IntentPanel 
                             intent={currentIntent} 

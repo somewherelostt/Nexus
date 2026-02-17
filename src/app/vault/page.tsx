@@ -63,11 +63,11 @@ function VaultStatusBar({
   loading: boolean;
 }) {
   return (
-    <header className="border-b border-[rgba(255,255,255,0.06)] pb-6">
-      <h1 className="text-[28px] font-medium text-white tracking-tight">
+    <header className="border-b border-white/[0.06] pb-6">
+      <h1 className="text-3xl font-semibold tracking-tight text-white">
         Memory Vault
       </h1>
-      <p className="mt-1 text-sm" style={{ color: MUTED }}>
+      <p className="mt-2 text-sm text-muted-foreground">
         Your encrypted data. Zero exposure.
       </p>
       {loading ? (

@@ -44,41 +44,31 @@ export function WalletBadge() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-4 bg-secondary/50 border border-white/5 rounded-full pl-4 pr-2 py-1.5 h-10 backdrop-blur-sm hover:border-white/10 hover:bg-secondary/70 transition-colors focus:outline-none focus:ring-2 focus:ring-accent/30 focus:ring-offset-2 focus:ring-offset-background"
+        className="flex items-center gap-3 bg-[var(--origin-surface)] border border-white/[0.08] rounded-sm pl-3 pr-2 py-2 h-10 hover:border-white/20 transition-colors focus:outline-none focus:ring-1 focus:ring-white/20"
         aria-expanded={open}
         aria-haspopup="true"
         aria-label="Wallet menu"
       >
-        {/* Balance */}
-        <span className="text-sm font-medium text-white/90">
+        <span className="font-mono text-xs text-white/90 token-amount">
           {balance != null ? Number(balance).toFixed(2) : "0"} NEAR
         </span>
-
-        <div className="h-4 w-[1px] bg-white/10" />
-
-        {/* Network */}
-        <div className="flex items-center gap-2">
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
-          </span>
-          <span className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Testnet</span>
+        <div className="h-4 w-px bg-white/10" />
+        <div className="flex items-center gap-1.5">
+          <span className="relative flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+          <span className="font-mono text-[10px] uppercase tracking-widest text-white/50">Testnet</span>
         </div>
-
-        <div className="h-4 w-[1px] bg-white/10" />
-
-        {/* Address + Chevron */}
-        <span className="text-sm text-muted-foreground font-mono">
+        <div className="h-4 w-px bg-white/10" />
+        <span className="font-mono text-xs text-white/60">
           {truncateAddress(accountId, 6)}
         </span>
-        <span className={`p-1.5 rounded-full transition-transform ${open ? "rotate-180" : ""}`}>
-          <ChevronDown className="w-4 h-4 text-muted-foreground" />
+        <span className={`p-1 transition-transform ${open ? "rotate-180" : ""}`}>
+          <ChevronDown className="w-4 h-4 text-white/50" />
         </span>
       </button>
 
       {open && (
         <div
-          className="absolute right-0 top-full mt-2 w-56 rounded-xl border border-white/10 bg-[#0F0F1A] shadow-xl shadow-black/30 py-1 z-50 animate-in fade-in slide-in-from-top-2 duration-200"
+          className="absolute right-0 top-full mt-2 w-56 rounded-sm border border-white/[0.08] bg-[var(--origin-surface)] shadow-xl py-1 z-50 animate-in fade-in slide-in-from-top-2 duration-200"
           role="menu"
         >
           <a

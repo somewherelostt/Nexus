@@ -7,10 +7,26 @@ import { NEAR_EXPLORER_URL } from "@/config/near";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowUpRight, ArrowDownLeft, Clock, History } from "lucide-react";
 
-function formatRelativeTime(iso: string): string {
-  const d = new Date(iso);
+function formatRelativeTime(blockTimestamp: string | number): string {
+  let tsMs: number;
+  if (typeof blockTimestamp === "string") {
+    const parsed = Date.parse(blockTimestamp);
+    if (Number.isFinite(parsed)) {
+      tsMs = parsed;
+    } else {
+      const num = Number(blockTimestamp);
+      tsMs = Number.isFinite(num) ? (num > 1e15 ? num / 1e6 : num) : NaN;
+    }
+  } else {
+    const num = Number(blockTimestamp);
+    tsMs = Number.isFinite(num) ? (num > 1e15 ? num / 1e6 : num) : NaN;
+  }
+  if (!Number.isFinite(tsMs)) return "—";
+  const d = new Date(tsMs);
+  if (Number.isNaN(d.getTime())) return "—";
   const now = Date.now();
   const diff = now - d.getTime();
+  if (diff < 0) return "Just now";
   if (diff < 60_000) return "Just now";
   if (diff < 3600_000) return `${Math.floor(diff / 60_000)} mins ago`;
   if (diff < 86400_000) return `${Math.floor(diff / 3600_000)} hrs ago`;
@@ -42,35 +58,38 @@ export function PaymentHistory() {
 
   if (!accountId) {
     return (
-      <Card className="bg-zinc-900 border-zinc-800 text-white h-full">
-        <CardHeader>
-          <CardTitle className="text-xl font-medium flex items-center gap-2">
-            <span className="bg-purple-500/20 text-purple-400 p-2 rounded-lg"><History className="w-5 h-5" /></span>
+      <Card className="rounded-sm border border-white/[0.08] bg-[var(--origin-surface)] h-full hover:border-white/[0.12]">
+        <CardHeader className="border-b border-white/5 px-4 py-3">
+          <CardTitle className="font-mono text-xs uppercase tracking-widest text-white/90 flex items-center gap-2">
+            <History className="w-4 h-4 text-[#A855F7]" />
             Recent Transactions
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <p className="text-zinc-500 text-sm">Connect your NEAR wallet to see transaction history.</p>
+        <CardContent className="p-4">
+          <p className="font-mono text-xs text-white/50">Connect your NEAR wallet to see transaction history.</p>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="bg-zinc-900 border-zinc-800 text-white h-full">
-      <CardHeader>
-        <CardTitle className="text-xl font-medium flex items-center gap-2">
-          <span className="bg-purple-500/20 text-purple-400 p-2 rounded-lg"><History className="w-5 h-5" /></span>
+    <Card className="rounded-sm border border-white/[0.08] bg-[var(--origin-surface)] h-full hover:border-white/[0.12]">
+      <CardHeader className="border-b border-white/5 px-4 py-3">
+        <CardTitle className="font-mono text-xs uppercase tracking-widest text-white/90 flex items-center gap-2">
+          <History className="w-4 h-4 text-[#A855F7]" />
           Recent Transactions
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-0">
         {isLoading ? (
-          <p className="text-zinc-500 text-sm">Loading...</p>
+          <div className="p-4">
+            <div className="loader-pulse-bar w-24" />
+            <p className="font-mono text-xs text-white/50 mt-3">Loading...</p>
+          </div>
         ) : txns.length === 0 ? (
-          <p className="text-zinc-500 text-sm">No transactions yet.</p>
+          <p className="font-mono text-xs text-white/50 p-4">No transactions yet.</p>
         ) : (
-          <div className="space-y-4">
+          <div className="divide-y divide-white/5">
             {txns.map((tx) => {
               const type = txType(tx, accountId);
               const status = tx.outcome?.status ?? tx.status;
@@ -81,26 +100,42 @@ export function PaymentHistory() {
                   href={`${NEAR_EXPLORER_URL}/txns/${tx.transaction_hash}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-between p-3 rounded-lg hover:bg-zinc-800/50 transition-colors group border border-transparent hover:border-zinc-800"
+                  className="flex items-center justify-between gap-4 px-4 py-3 hover:bg-white/[0.02] transition-colors group"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${type === "sent" ? "bg-orange-900/20 text-orange-500" : "bg-green-900/20 text-green-500"}`}>
-                      {type === "sent" ? <ArrowUpRight className="w-5 h-5" /> : <ArrowDownLeft className="w-5 h-5" />}
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div
+                      className={`w-9 h-9 rounded-sm border border-white/10 flex items-center justify-center shrink-0 ${
+                        type === "sent" ? "bg-white/5 text-white/80" : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                      }`}
+                    >
+                      {type === "sent" ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownLeft className="w-4 h-4" />}
                     </div>
-                    <div>
-                      <div className="font-medium text-zinc-200 group-hover:text-white transition-colors">
+                    <div className="min-w-0">
+                      <div className="font-mono text-xs text-white/90 truncate group-hover:text-white">
                         {type === "sent" ? tx.receiver_id : tx.signer_id}
                       </div>
-                      <div className="text-xs text-zinc-500 flex items-center gap-1">
-                        <Clock className="w-3 h-3" /> {formatRelativeTime(tx.block_timestamp)}
+                      <div className="font-mono text-[10px] text-white/50 flex items-center gap-1 mt-0.5">
+                        <Clock className="w-3 h-3 shrink-0" />
+                        {formatRelativeTime(tx.block_timestamp)}
                       </div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className={`font-bold ${type === "sent" ? "text-zinc-200" : "text-green-400"}`}>
-                      {type === "sent" ? "-" : "+"}{txAmount(tx)}
-                    </div>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${confirmed ? "bg-green-900/30 text-green-400" : "bg-yellow-900/30 text-yellow-400"}`}>
+                  <div className="text-right shrink-0 flex flex-col items-end gap-1">
+                    <span
+                      className={`font-mono text-sm token-amount value-glow ${
+                        type === "sent" ? "text-white/80" : "text-emerald-400"
+                      }`}
+                    >
+                      {type === "sent" ? "-" : "+"}
+                      {txAmount(tx)}
+                    </span>
+                    <span
+                      className={`font-mono text-[10px] uppercase tracking-widest border px-2 py-0.5 ${
+                        confirmed
+                          ? "text-emerald-400/90 border-emerald-500/20 bg-emerald-500/5"
+                          : "text-amber-400/90 border-amber-500/20 bg-amber-500/5"
+                      }`}
+                    >
                       {confirmed ? "Confirmed" : "Pending"}
                     </span>
                   </div>

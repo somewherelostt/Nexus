@@ -16,8 +16,8 @@ import { ExternalLink } from "lucide-react";
 import Link from "next/link";
 
 const CARD_CLASS =
-  "rounded-[20px] border border-[rgba(255,255,255,0.06)] bg-[#0A0A0F] text-white";
-const MUTED = "text-[rgba(255,255,255,0.65)]";
+  "rounded-sm border border-white/[0.08] bg-[var(--origin-surface)] text-white hover:border-white/[0.12] transition-colors";
+const MUTED = "text-white/60";
 
 function Skeleton({ className = "" }: { className?: string }) {
   return (
@@ -79,29 +79,26 @@ function WalletOverviewCard({
             <p className="font-mono text-sm text-white">
               {truncateAddress(accountId, 6)}
             </p>
-            <p className={`text-xs ${MUTED} mt-2`}>
-              NEAR balance: <span className="text-white font-medium">{balance ?? "0"}</span> NEAR
+            <p className="text-xs text-white/50 mt-2 font-mono">
+              NEAR balance: <span className="text-white token-amount">{balance ?? "0"}</span> NEAR
               {balanceUsd != null && (
-                <span className="ml-1">(${balanceUsd.toFixed(2)} USD)</span>
+                <span className="ml-1 price-display">(${balanceUsd.toFixed(2)} USD)</span>
               )}
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-[rgba(255,255,255,0.06)] bg-[#0A0A0F] px-3 py-1 text-xs">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.6)]" />
-              </span>
+            <span className="inline-flex items-center gap-1.5 rounded-sm border border-white/10 bg-white/5 px-3 py-1 font-mono text-[10px] uppercase tracking-widest text-white/70">
+              <span className="relative flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
               Verified Private Execution
             </span>
-            <span className="rounded-full border border-[rgba(255,255,255,0.06)] bg-[#0A0A0F] px-3 py-1 text-xs text-[rgba(255,255,255,0.65)] uppercase tracking-wide">
+            <span className="rounded-sm border border-white/10 bg-white/5 px-3 py-1 font-mono text-[10px] uppercase tracking-widest text-white/50">
               NEAR Testnet
             </span>
           </div>
         </div>
-        <div className="mt-4 pt-4 border-t border-[rgba(255,255,255,0.06)]">
-          <p className={`text-xs ${MUTED}`}>Total portfolio value</p>
-          <p className="text-2xl font-semibold text-white">
+        <div className="mt-4 pt-4 border-t border-white/5">
+          <p className="text-[10px] font-mono uppercase tracking-widest text-white/50">Total portfolio value</p>
+          <p className="font-mono text-2xl font-medium text-white price-display mt-1">
             ${totalUsd.toFixed(2)} USD
           </p>
         </div>
@@ -194,14 +191,14 @@ function TokenHoldingsTable({
             ))}
           </div>
         ) : tokens.length === 0 ? (
-          <div className="rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#0A0A0F] p-8 text-center">
-            <p className={MUTED}>No tokens found. Ask NexusAI to swap some tokens.</p>
+          <div className="rounded-sm border border-white/5 p-8 text-center">
+            <p className="font-mono text-xs text-white/50">No tokens found. Ask NexusAI to swap some tokens.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className={MUTED + " text-left border-b border-[rgba(255,255,255,0.06)]"}>
+                <tr className="text-left border-b border-white/5 font-mono text-[10px] uppercase tracking-widest text-white/50">
                   <th className="pb-3 font-medium">Token</th>
                   <th className="pb-3 font-medium">Balance</th>
                   <th className="pb-3 font-medium">Value (USD)</th>
@@ -213,24 +210,24 @@ function TokenHoldingsTable({
                 {tokens.map((t) => (
                   <tr
                     key={t.symbol}
-                    className="border-b border-[rgba(255,255,255,0.06)] last:border-0 hover:bg-white/[0.02] transition-colors"
+                    className="border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition-colors"
                   >
                     <td className="py-3">
                       <div className="flex items-center gap-2">
                         <TokenAvatar symbol={t.symbol} />
                         <span className="font-medium">{t.symbol}</span>
-                        <span className="rounded border border-[rgba(255,255,255,0.06)] px-1.5 py-0.5 text-[10px] uppercase text-[rgba(255,255,255,0.65)]">
+                        <span className="rounded-sm border border-white/10 px-1.5 py-0.5 font-mono text-[10px] uppercase text-white/50">
                           NEAR
                         </span>
                       </div>
                     </td>
-                    <td className="py-3">{t.balance}</td>
-                    <td className="py-3">${t.valueUsd.toFixed(2)}</td>
-                    <td className="py-3">{t.change24h != null ? `${t.change24h > 0 ? "+" : ""}${t.change24h.toFixed(2)}%` : "—"}</td>
+                    <td className="py-3 font-mono token-amount">{t.balance}</td>
+                    <td className="py-3 font-mono price-display value-glow px-2">${t.valueUsd.toFixed(2)}</td>
+                    <td className="py-3 font-mono text-white/60">{t.change24h != null ? `${t.change24h > 0 ? "+" : ""}${t.change24h.toFixed(2)}%` : "—"}</td>
                     <td className="py-3">
                       <button
                         type="button"
-                        className="text-xs text-[rgba(255,255,255,0.65)] hover:text-white hover:underline"
+                        className="font-mono text-[10px] uppercase tracking-widest text-white/50 hover:text-white"
                       >
                         Swap
                       </button>
@@ -298,10 +295,26 @@ function txTypeFromTx(tx: NearBlocksTx): "SEND" | "RECEIVE" | "SWAP" {
   return "SWAP";
 }
 
-function formatRelativeTime(iso: string): string {
-  const d = new Date(iso);
+function formatRelativeTime(blockTimestamp: string | number): string {
+  let tsMs: number;
+  if (typeof blockTimestamp === "string") {
+    const parsed = Date.parse(blockTimestamp);
+    if (Number.isFinite(parsed)) {
+      tsMs = parsed;
+    } else {
+      const num = Number(blockTimestamp);
+      tsMs = Number.isFinite(num) ? (num > 1e15 ? num / 1e6 : num) : NaN;
+    }
+  } else {
+    const num = Number(blockTimestamp);
+    tsMs = Number.isFinite(num) ? (num > 1e15 ? num / 1e6 : num) : NaN;
+  }
+  if (!Number.isFinite(tsMs)) return "—";
+  const d = new Date(tsMs);
+  if (Number.isNaN(d.getTime())) return "—";
   const now = Date.now();
   const diff = now - d.getTime();
+  if (diff < 0) return "Just now";
   if (diff < 60_000) return "Just now";
   if (diff < 3600_000) return `${Math.floor(diff / 60_000)} mins ago`;
   if (diff < 86400_000) return `${Math.floor(diff / 3600_000)} hrs ago`;
@@ -425,16 +438,16 @@ export default function PortfolioPage() {
   const balanceUsd = nearPrice != null ? balanceNum * nearPrice : null;
 
   return (
-    <div className="min-h-full bg-[#000000]">
+    <div className="min-h-full">
       <div className="space-y-8">
-        <div>
-          <h1 className="text-2xl font-semibold text-white tracking-tight">
+        <header>
+          <h1 className="text-3xl font-semibold tracking-tight text-white">
             Portfolio
           </h1>
-          <p className={`text-sm ${MUTED} mt-1`}>
+          <p className="text-muted-foreground mt-2">
             Overview of your NEAR wallet and activity
           </p>
-        </div>
+        </header>
 
         <WalletOverviewCard
           accountId={accountId}

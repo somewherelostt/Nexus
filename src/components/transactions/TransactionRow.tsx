@@ -69,6 +69,12 @@ export function TransactionRow({ tx, accountId }: TransactionRowProps) {
         statusText = "Pending";
     }
 
+    // Normalize block_timestamp: may be ms, or nanoseconds, or ISO string
+    const rawTs = tx.block_timestamp;
+    let tsMs = typeof rawTs === "string" ? Date.parse(rawTs) : Number(rawTs);
+    if (tsMs > 1e15) tsMs = Math.floor(tsMs / 1e6); // nanoseconds -> ms
+    const date = new Date(tsMs);
+    const isValidDate = Number.isFinite(tsMs) && !Number.isNaN(date.getTime());
 
     return (
         <div className="border-b border-white/5 last:border-0">
@@ -90,11 +96,11 @@ export function TransactionRow({ tx, accountId }: TransactionRowProps) {
                 </div>
 
                 {/* Amount */}
-                <div className="col-span-3 md:col-span-2 text-right md:text-left">
+                <div className="col-span-3 md:col-span-2 text-right md:text-left value-glow px-1">
                     {amount && (
                         <>
-                            <div className={cn("font-medium text-sm", type === "SEND" ? "text-white" : "text-green-400")}>{amount}</div>
-                            <div className="text-xs text-zinc-600">~${Math.abs(parseFloat(amount.replace(/[^0-9.-]/g, "")) * 6.5).toFixed(2)}</div>
+                            <div className={cn("font-mono text-sm token-amount", type === "SEND" ? "text-white" : "text-emerald-400")}>{amount}</div>
+                            <div className="font-mono text-xs text-white/50 price-display">~${Math.abs(parseFloat(amount.replace(/[^0-9.-]/g, "")) * 6.5).toFixed(2)}</div>
                         </>
                     )}
                 </div>
@@ -113,8 +119,8 @@ export function TransactionRow({ tx, accountId }: TransactionRowProps) {
 
                  {/* Time */}
                  <div className="hidden md:block col-span-3 overflow-hidden text-right">
-                    <div className="text-sm text-zinc-400" title={new Date(tx.block_timestamp).toLocaleString()}>
-                        {formatDistanceToNow(tx.block_timestamp, { addSuffix: true })}
+                    <div className="text-sm text-zinc-400" title={isValidDate ? date.toLocaleString() : undefined}>
+                        {isValidDate ? formatDistanceToNow(date, { addSuffix: true }) : "—"}
                     </div>
                 </div>
                  

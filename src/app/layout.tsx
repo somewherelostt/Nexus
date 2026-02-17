@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const jetbrainsMono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
 export const metadata: Metadata = {
   title: "NexusAI",
@@ -16,8 +17,7 @@ import { headers } from "next/headers";
 import { ContextProvider } from "@/context/ContextProvider";
 
 import { WalletProvider } from "@/context/WalletContext";
-import { Sidebar } from "@/components/layout/Sidebar";
-import { TopBar } from "@/components/layout/TopBar";
+import { AppShell } from "@/components/layout/AppShell";
 import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
 
 export default function RootLayout({
@@ -29,24 +29,11 @@ export default function RootLayout({
 
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
-      <body className={cn(inter.variable, "font-sans antialiased bg-background text-foreground min-h-screen selection:bg-accent/30")} suppressHydrationWarning>
+      <body className={cn(inter.variable, jetbrainsMono.variable, "font-sans antialiased bg-[var(--origin-background)] text-foreground min-h-screen selection:bg-accent/30")} suppressHydrationWarning>
         <ContextProvider initialState={initialState}>
             <WalletProvider>
                  <OnboardingModal />
-                 <div className="flex min-h-screen">
-                    {/* Sidebar Fixed */}
-                    <Sidebar />
-                    
-                    {/* Main Content Area */}
-                    <div className="flex-1 ml-64 flex flex-col min-h-screen relative">
-                        {/* Top Bar Fixed/Sticky */}
-                         <TopBar />
-                         
-                        <main className="flex-1 px-8 pt-24 pb-12 overflow-y-auto">
-                            {children}
-                        </main>
-                    </div>
-                 </div>
+                 <AppShell>{children}</AppShell>
             </WalletProvider>
         </ContextProvider>
       </body>

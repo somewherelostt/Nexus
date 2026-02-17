@@ -4,61 +4,123 @@
 
 @layer base {
   :root {
-    /* Base Colors - Always Dark */
-    --background: 0 0% 0%; /* #000000 */
-    --foreground: 0 0% 100%; /* #FFFFFF */
-    
-    --card: 240 10% 3.9%; /* #0A0A0F */
-    --card-foreground: 0 0% 100%; /* #FFFFFF */
- 
-    --popover: 240 10% 4%; /* #0B0B0F - Secondary BG */
-    --popover-foreground: 0 0% 100%; /* #FFFFFF */
- 
-    --primary: 0 0% 100%; /* #FFFFFF */
-    --primary-foreground: 240 5.9% 10%; /* Inverted text */
- 
-    --secondary: 240 5% 15%; /* #0A0A0F */
-    --secondary-foreground: 0 0% 100%; /* #FFFFFF */
- 
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%; /* rgba(255,255,255,0.65) equivalent */
- 
-    --accent: 258 74% 63%; /* #6C5CE7 - Primary Accent */
+    /* Origin: pitch black */
+    --origin-background: #000000;
+    --origin-surface: #0A0A0A;
+    --origin-surface-highlight: #121212;
+    --origin-border-dim: rgba(255, 255, 255, 0.08);
+
+    /* Semantic (mapped to Origin where used) */
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+    --card: 0 0% 4%;
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 5%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 0 0% 100%;
+    --primary-foreground: 0 0% 4%;
+    --secondary: 0 0% 6%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 8%;
+    --muted-foreground: 0 0% 55%;
+    --accent: 270 91% 65%;
     --accent-foreground: 0 0% 100%;
-    
-    --accent-glow: 190 100% 50%; /* #00D4FF - Secondary Accent Gradient */
- 
+    --accent-glow: 330 81% 60%;
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+    --alert: 0 72% 51%;
+    --alert-foreground: 0 0% 100%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-
-    --border: 0 0% 100% / 0.08; /* rgba(255,255,255,0.08) */
-    --input: 0 0% 100% / 0.08; /* rgba(255,255,255,0.08) */
-    --ring: 258 74% 63%; /* #6C5CE7 */
- 
-    --radius: 0.75rem; /* 12px roughly, will use 20px/14px specifically in components */
+    --border: 0 0% 100% / 0.08;
+    --input: 0 0% 100% / 0.06;
+    --ring: 270 91% 65%;
+    --radius: 0.25rem;
+    --header-gradient: linear-gradient(90deg, rgba(168, 85, 247, 0.12), rgba(236, 72, 153, 0.08));
   }
 }
- 
+
 @layer base {
   * {
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-[var(--origin-background)] text-foreground font-sans antialiased;
   }
+}
+
+/* Financial / data: force monospace */
+.font-mono-data,
+[data-value],
+.token-amount,
+.gas-amount,
+.price-display,
+.tx-hash {
+  font-family: var(--font-mono), ui-monospace, monospace;
 }
 
 @layer utilities {
   .glow-text {
-    text-shadow: 0 0 20px rgba(108, 92, 231, 0.5);
+    text-shadow: 0 0 20px rgba(168, 85, 247, 0.4);
   }
-  
   .glow-box {
-    box-shadow: 0 0 40px -10px rgba(108, 92, 231, 0.3);
+    box-shadow: 0 0 40px -10px rgba(168, 85, 247, 0.2);
+  }
+  .origin-header-strip {
+    background: var(--header-gradient);
+  }
+  /* Origin card: black, subtle border, visible on hover */
+  .card-origin {
+    @apply bg-[var(--origin-surface)] text-card-foreground;
+    border: 1px solid var(--origin-border-dim);
+    border-radius: 2px;
+  }
+  .card-origin:hover {
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+  /* Micro-border: nearly invisible until hover */
+  .micro-border {
+    border: 1px solid var(--origin-border-dim);
+  }
+  .micro-border:hover {
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+  /* Value column glow (tables) */
+  .value-glow {
+    box-shadow: 0 0 12px rgba(168, 85, 247, 0.12);
   }
 }
 
-/* NEAR wallet selector modal: ensure it's above app chrome and all content is clickable */
+/* CLI-style input caret */
+@keyframes caret-blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+.caret-blink::after {
+  content: "";
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  background: hsl(var(--accent));
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  animation: caret-blink 1s step-end infinite;
+}
+
+/* Pulsing gradient bar loader */
+@keyframes pulse-bar {
+  0%, 100% { opacity: 0.4; transform: scaleX(0.3); }
+  50% { opacity: 1; transform: scaleX(1); }
+}
+.loader-pulse-bar {
+  height: 2px;
+  background: linear-gradient(to right, #A855F7, #EC4899);
+  border-radius: 1px;
+  transform-origin: left;
+  animation: pulse-bar 1.2s ease-in-out infinite;
+}
+
+/* NEAR wallet selector modal: above app chrome */
 #near-wallet-selector-modal,
 .nws-modal-wrapper {
   z-index: 2147483647 !important;

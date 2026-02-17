@@ -33,56 +33,53 @@ interface IntentPanelProps {
 export function IntentPanel({ intent, onConfirm, onCancel }: IntentPanelProps) {
     if (!intent) {
         return (
-            <div className="h-full flex flex-col items-center justify-center p-8 text-center bg-[#0F0F1A] border-l border-white/5">
-                <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4 animate-pulse">
-                     <Cpu className="w-8 h-8 text-white/20" />
+            <div className="h-full flex flex-col items-center justify-center p-8 text-center bg-[var(--origin-background)] border-l border-white/[0.06]">
+                <div className="w-14 h-14 rounded-sm border border-white/10 bg-white/5 flex items-center justify-center mb-4">
+                    <Cpu className="w-7 h-7 text-white/20" />
                 </div>
                 <h3 className="text-lg font-medium text-white mb-2">Awaiting Command</h3>
-                <p className="text-sm text-zinc-500 max-w-[250px]">
-                    I'm listening. Try "Send 5 NEAR to [address]" or "Swap USDC for NEAR".
+                <p className="font-mono text-xs text-white/50 max-w-[250px]">
+                    Try &quot;Send 5 NEAR to [address]&quot; or &quot;Swap USDC for NEAR&quot;.
                 </p>
             </div>
         );
     }
 
     return (
-        <div className="h-full flex flex-col border-l border-white/5 bg-[#0F0F1A]">
-            <div className="p-6 border-b border-white/5">
-                <h2 className="text-lg font-medium text-white flex items-center gap-2">
-                    <Zap className="w-5 h-5 text-accent" />
+        <div className="h-full flex flex-col border-l border-white/[0.06] bg-[var(--origin-background)]">
+            <div className="p-4 border-b border-white/5">
+                <h2 className="font-mono text-xs uppercase tracking-widest text-white/90 flex items-center gap-2">
+                    <Zap className="w-4 h-4 text-[#A855F7]" />
                     Live Context
                 </h2>
             </div>
             
-            <div className="flex-1 p-6 overflow-y-auto space-y-6">
-                {/* Parsed Intent Box */}
-                <div className="bg-[#1A1A2E] border border-white/10 rounded-xl overflow-hidden">
-                    <div className="px-4 py-2 bg-white/5 border-b border-white/5 flex justify-between items-center">
-                        <span className="text-xs font-semibold text-zinc-400 uppercase tracking-widest">
-                            🧠 Parsed Intent
-                        </span>
+            <div className="flex-1 p-4 overflow-y-auto space-y-4">
+                <div className="bg-[var(--origin-surface)] border border-white/[0.08] rounded-sm overflow-hidden">
+                    <div className="px-4 py-2 border-b border-white/5 flex justify-between items-center font-mono text-[10px] uppercase tracking-widest text-white/50">
+                        <span>🧠 Parsed Intent</span>
                     </div>
                     <div className="p-4 space-y-2">
                         <div className="flex justify-between">
-                            <span className="text-sm text-zinc-500">Action</span>
-                            <span className="text-sm font-mono text-accent">{intent.action}</span>
+                            <span className="text-xs text-white/50">Action</span>
+                            <span className="text-xs font-mono text-[#A855F7]">{intent.action}</span>
                         </div>
                         {intent.token && (
                             <div className="flex justify-between">
-                                <span className="text-sm text-zinc-500">Token</span>
-                                <span className="text-sm font-mono text-white">{intent.token}</span>
+                                <span className="text-xs text-white/50">Token</span>
+                                <span className="text-xs font-mono text-white token-amount">{intent.token}</span>
                             </div>
                         )}
-                         {intent.amount && (
+                        {intent.amount && (
                             <div className="flex justify-between">
-                                <span className="text-sm text-zinc-500">Amount</span>
-                                <span className="text-sm font-mono text-white">{intent.amount}</span>
+                                <span className="text-xs text-white/50">Amount</span>
+                                <span className="text-xs font-mono text-white token-amount">{intent.amount}</span>
                             </div>
                         )}
                         {intent.recipient && (
                             <div className="flex justify-between">
-                                <span className="text-sm text-zinc-500">To</span>
-                                <span className="text-sm font-mono text-white truncate max-w-[150px]">{intent.recipient}</span>
+                                <span className="text-xs text-white/50">To</span>
+                                <span className="text-xs font-mono text-white truncate max-w-[150px]">{intent.recipient}</span>
                             </div>
                         )}
                     </div>
@@ -132,26 +129,24 @@ export function IntentPanel({ intent, onConfirm, onCancel }: IntentPanelProps) {
                     </div>
                 </div>
 
-                 {/* Gas Estimate */}
-                 <div className="bg-[#1A1A2E] p-4 rounded-xl border border-white/5">
+                 <div className="bg-[var(--origin-surface)] p-4 rounded-sm border border-white/5">
                     <div className="flex items-center gap-2 mb-2">
-                        <Fuel className="w-4 h-4 text-zinc-400" />
-                        <span className="text-xs font-semibold text-zinc-400 uppercase tracking-widest">Gas Estimate</span>
+                        <Fuel className="w-4 h-4 text-white/40" />
+                        <span className="font-mono text-[10px] uppercase tracking-widest text-white/50">Gas Estimate</span>
                     </div>
                     <div className="flex items-center justify-between">
-                         <span className="text-zinc-500 text-sm">Network Fee</span>
-                         <span className="text-accent font-mono">~{intent.gasEstimate} NEAR</span>
+                        <span className="text-xs text-white/50">Network Fee</span>
+                        <span className="font-mono text-sm gas-amount text-[#A855F7]">~{intent.gasEstimate} NEAR</span>
                     </div>
                  </div>
 
-                 {/* Attestation */}
-                 <div className="bg-green-900/10 border border-green-500/20 p-4 rounded-xl">
+                 <div className="bg-emerald-950/20 border border-emerald-500/20 p-4 rounded-sm">
                     <div className="flex items-center gap-2 mb-1">
-                        <ShieldCheck className="w-4 h-4 text-green-400" />
-                        <span className="text-xs font-semibold text-green-400 uppercase tracking-widest">Attestation</span>
+                        <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                        <span className="font-mono text-[10px] uppercase tracking-widest text-emerald-400">Attestation</span>
                     </div>
-                    <p className="text-xs text-green-500/80">Verified Private Execution</p>
-                    <p className="text-[10px] font-mono text-green-500/60 mt-1">TEE: 0x7f3a...c91b</p>
+                    <p className="text-xs text-emerald-400/80">Verified Private Execution</p>
+                    <p className="text-[10px] font-mono text-emerald-400/60 mt-1">TEE: 0x7f3a...c91b</p>
                  </div>
             </div>
         </div>
