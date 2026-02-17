@@ -11,6 +11,37 @@ export interface Transaction {
     status: "SUCCESS" | "FAILURE" | "PENDING";
 }
 
+/** Shape used by portfolio (NearBlocks-style tx list) */
+export interface NearBlocksTx {
+    transaction_hash: string;
+    signer_id: string;
+    receiver_id: string;
+    block_timestamp: string;
+    actions?: { action?: string; method?: string; deposit?: string }[];
+    status: string;
+    outcome?: { status?: string };
+}
+
+/** Fetch NEAR balance for account (in NEAR). Mock returns a number. */
+export async function fetchNEARBalance(accountId: string): Promise<number> {
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    return 12.5; // Mock
+}
+
+/** Fetch recent transactions for account. Returns NearBlocks-style list. */
+export async function fetchAccountTxns(accountId: string, limit: number): Promise<NearBlocksTx[]> {
+    const list = await fetchAccountHistory(accountId);
+    return list.slice(0, limit).map((tx) => ({
+        transaction_hash: tx.hash,
+        signer_id: tx.signer_id,
+        receiver_id: tx.receiver_id,
+        block_timestamp: new Date(tx.block_timestamp).toISOString(),
+        actions: tx.actions,
+        status: tx.status,
+        outcome: { status: tx.status },
+    }));
+}
+
 export async function fetchAccountHistory(accountId: string): Promise<Transaction[]> {
     // MOCK DATA for Demo
     // Real implementation requires Indexer API (NearBlocks, Pikespeak, etc.)

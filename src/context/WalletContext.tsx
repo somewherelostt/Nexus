@@ -43,7 +43,10 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
         network: NEAR_NETWORK_ID,
         modules: [
             setupMyNearWallet(),
-            setupEthereumWallets({ wagmiConfig: config, web3Modal })
+            setupEthereumWallets({
+              wagmiConfig: config as Parameters<typeof setupEthereumWallets>[0]["wagmiConfig"],
+              web3Modal,
+            }),
         ],
       });
 
