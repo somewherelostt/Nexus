@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { parseIntent } from "@/lib/ai-service";
 import { useWallet } from "@/context/WalletContext";
+import { NEAR_CONTRACT_ID } from "@/config/near";
 
 const STARTER_PROMPTS = [
     "Send 5 NEAR to [address]",
@@ -99,35 +100,39 @@ export function ChatInterface() {
             let panelIntent = null;
 
             if (intent.action === "SEND" || intent.action === "SWAP") {
-                // Show Transaction Preview in Chat + Update Panel
+                // SWAP has no recipient from parser; use swap target so Confirm works
+                const recipient = intent.action === "SWAP"
+                    ? (NEAR_CONTRACT_ID || "wrap.testnet")
+                    : intent.recipient;
+                const txData = {
+                    action: intent.action,
+                    token: intent.token,
+                    amount: intent.amount,
+                    recipient,
+                    network: intent.chain,
+                    gas: "0.00025 NEAR"
+                };
                 aiMsg = {
                     id: (Date.now() + 1).toString(),
                     role: "ai",
                     type: "tx_preview",
                     content: "",
-                    data: {
-                        action: intent.action,
-                        token: intent.token,
-                        amount: intent.amount,
-                        recipient: intent.recipient,
-                        network: intent.chain,
-                        gas: "0.00025 NEAR"
-                    },
+                    data: txData,
                     timestamp: new Date()
                 };
 
                 panelIntent = {
-                    parsedIntent: intent.action === "SEND" 
+                    parsedIntent: intent.action === "SEND"
                         ? `Transfer ${intent.amount} ${intent.token} to ${intent.recipient}`
                         : `Swap ${intent.amount} TOKENS for ${intent.token}`,
                     action: intent.action,
                     token: intent.token,
                     amount: intent.amount,
-                    recipient: intent.recipient,
+                    recipient,
                     gasEstimate: "0.00025",
                     steps: [
                         { id: 1, label: "Query HOT KIT rates", status: "completed" },
-                        { id: 2, label: "Build NEAR Intent", status: "processing" },
+                        { id: 2, label: "Build NEAR Intent", status: "completed" },
                         { id: 3, label: "Sign via WalletConnect", status: "pending" }
                     ],
                     status: "ready"
@@ -182,14 +187,16 @@ export function ChatInterface() {
         }, 1500);
     };
 
-    const makeTxConfirmHandler = (data: { amount?: string; recipient?: string; token?: string } | null) => async (): Promise<string | void> => {
-        if (!selector || !data?.recipient || !data?.amount) return;
+    const makeTxConfirmHandler = (data: { action?: string; amount?: string; recipient?: string; token?: string } | null) => async (): Promise<string | void> => {
+        if (!selector || !data?.amount) return;
+        const receiverId = data.recipient || (data.action === "SWAP" ? (NEAR_CONTRACT_ID || "wrap.testnet") : undefined);
+        if (!receiverId) return;
         const amt = parseFloat(data.amount || "0");
         if (isNaN(amt) || amt <= 0) return;
         const wallet = await selector.wallet();
         const amountYocto = BigInt(Math.floor(amt * 1e24)).toString();
         const result = await wallet.signAndSendTransaction({
-            receiverId: data.recipient,
+            receiverId,
             actions: [{ type: "Transfer", params: { deposit: amountYocto } }],
         });
         const hash = (result as { transaction?: { hash?: string } })?.transaction?.hash ?? (result as { transaction_outcome?: { id?: string } })?.transaction_outcome?.id ?? (result as { receipts_outcome?: { id?: string }[] })?.receipts_outcome?.[0]?.id ?? "";

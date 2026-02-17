@@ -9,7 +9,7 @@ import { setupEthereumWallets } from "@near-wallet-selector/ethereum-wallets";
 import "@near-wallet-selector/modal-ui/styles.css";
 import { NEAR_NETWORK_ID, NEAR_CONTRACT_ID } from "../config/near";
 import { fetchNEARBalance } from "../lib/near-rpc";
-import { config } from "../config/wagmi";
+import { config, projectId as envProjectId } from "../config/wagmi";
 import { createWeb3Modal } from "@web3modal/wagmi/react";
 
 interface WalletContextType {
@@ -34,24 +34,24 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
 
   const init = useCallback(async () => {
     try {
-      const projectId = process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID;
-      if (!projectId) {
-        console.warn("NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID is not set. WalletConnect may not work.");
-      }
+      const modules = [setupMyNearWallet()];
+      // Always add Ethereum wallets (MetaMask, etc.) so they appear in the NEAR selector.
+      // Use env project ID or placeholder so Web3Modal can init; get a valid ID from cloud.walletconnect.com to avoid 403s.
+      const pid = (envProjectId || "placeholder-required").trim();
       const web3Modal = createWeb3Modal({
         wagmiConfig: config,
-        projectId: projectId || '',
+        projectId: pid,
       });
+      modules.push(
+        setupEthereumWallets({
+          wagmiConfig: config as Parameters<typeof setupEthereumWallets>[0]["wagmiConfig"],
+          web3Modal,
+        })
+      );
 
       const _selector = await setupWalletSelector({
         network: NEAR_NETWORK_ID,
-        modules: [
-            setupMyNearWallet(),
-            setupEthereumWallets({
-              wagmiConfig: config as Parameters<typeof setupEthereumWallets>[0]["wagmiConfig"],
-              web3Modal,
-            }),
-        ],
+        modules,
       });
 
       const _modal = setupModal(_selector, {

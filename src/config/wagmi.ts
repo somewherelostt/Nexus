@@ -24,8 +24,21 @@ export const nearEvmTestnet = defineChain({
   testnet: true,
 });
 
-/** Get projectId from env. Required for WalletConnect. */
+/** Raw projectId from env. */
 export const projectId = process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID ?? '';
+
+/** Placeholder/invalid IDs that cause Web3Modal 403s — treat as "no WalletConnect". */
+const PLACEHOLDER_IDS = new Set([
+  '',
+  'placeholder-required',
+  'c0fec857183e87834731305710d0c3f7', // old default
+]);
+
+/** True only when we have a real WalletConnect project ID (from cloud.walletconnect.com). */
+export const hasValidWalletConnectProjectId = (): boolean => {
+  const id = (projectId || '').trim();
+  return id.length > 0 && !PLACEHOLDER_IDS.has(id);
+};
 
 const metadata = {
   name: process.env.NEXT_PUBLIC_APP_NAME || 'NexusAI',

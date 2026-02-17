@@ -28,8 +28,8 @@ export default function RootLayout({
   const initialState = cookieToInitialState(config, headers().get("cookie"));
 
   return (
-    <html lang="en" className="dark">
-      <body className={cn(inter.variable, "font-sans antialiased bg-background text-foreground min-h-screen selection:bg-accent/30")}>
+    <html lang="en" className="dark" suppressHydrationWarning>
+      <body className={cn(inter.variable, "font-sans antialiased bg-background text-foreground min-h-screen selection:bg-accent/30")} suppressHydrationWarning>
         <ContextProvider initialState={initialState}>
             <WalletProvider>
                  <OnboardingModal />

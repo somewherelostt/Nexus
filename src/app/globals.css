@@ -57,3 +57,25 @@
     box-shadow: 0 0 40px -10px rgba(108, 92, 231, 0.3);
   }
 }
+
+/* NEAR wallet selector modal: ensure it's above app chrome and all content is clickable */
+#near-wallet-selector-modal,
+.nws-modal-wrapper {
+  z-index: 2147483647 !important;
+  pointer-events: auto !important;
+}
+.nws-modal-wrapper .nws-modal-overlay {
+  z-index: 1;
+  pointer-events: auto;
+}
+.nws-modal-wrapper .nws-modal {
+  z-index: 2;
+  pointer-events: auto;
+}
+.nws-modal-wrapper .nws-modal *,
+.nws-modal-wrapper .nws-modal button,
+.nws-modal-wrapper .nws-modal a,
+.nws-modal-wrapper .nws-modal input,
+.nws-modal-wrapper .nws-modal [role="button"] {
+  pointer-events: auto !important;
+}
