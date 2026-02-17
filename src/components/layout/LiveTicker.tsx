@@ -18,7 +18,7 @@ export function LiveTicker() {
   });
 
   return (
-    <div className="flex items-center gap-6 font-mono text-xs uppercase tracking-widest text-white/70">
+    <div className="flex items-center gap-6 font-mono text-xs uppercase tracking-widest text-white/70 leading-none">
       <span className="flex items-center gap-1.5">
         <span className="text-white/50">NEAR</span>
         <span className="text-white font-medium tabular-nums">

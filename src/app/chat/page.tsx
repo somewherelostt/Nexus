@@ -2,7 +2,7 @@ import { ChatInterface } from "@/components/chat/ChatInterface";
 
 export default function ChatPage() {
   return (
-    <div className="min-h-full -m-8 -mb-12">
+    <div className="h-[calc(100vh-6rem)] min-h-0 flex flex-col">
       <ChatInterface />
     </div>
   );

@@ -30,20 +30,20 @@ export function Sidebar() {
   const { accountId } = useWallet();
 
   return (
-    <aside className="fixed left-0 top-0 bottom-0 w-20 border-r border-white/[0.06] bg-[var(--origin-background)] z-40 flex flex-col">
-      {/* Logo */}
-      <div className="p-4 border-b border-white/[0.06] flex justify-center">
+    <aside className="fixed left-0 top-0 bottom-0 w-20 border-r border-white/[0.06] bg-[var(--origin-background)] z-40 flex flex-col items-center">
+      {/* Logo - same width as nav for alignment */}
+      <div className="w-full border-b border-white/[0.06] flex items-center justify-center py-4">
         <Link
           href="/chat"
-          className="w-9 h-9 rounded-sm border border-white/10 bg-white/5 flex items-center justify-center hover:border-white/20 transition-colors"
+          className="w-10 h-10 rounded-sm border border-white/10 bg-white/5 flex items-center justify-center hover:border-white/20 transition-colors shrink-0"
           aria-label="NexusAI Home"
         >
-          <span className="text-sm font-semibold text-white">N</span>
+          <span className="text-sm font-semibold text-white leading-none">N</span>
         </Link>
       </div>
 
-      {/* Icon nav */}
-      <nav className="flex-1 py-4 px-0 flex flex-col items-center gap-1">
+      {/* Icon nav - uniform width and center */}
+      <nav className="flex-1 w-full py-4 flex flex-col items-center gap-0.5">
         {NAV_ITEMS.map((item) => {
           const isActive = pathname === item.href;
           const Icon = item.icon;
@@ -53,26 +53,26 @@ export function Sidebar() {
               href={item.href}
               title={item.label}
               className={cn(
-                "w-12 h-10 flex items-center justify-center rounded-sm border border-transparent transition-all",
+                "w-10 h-10 flex items-center justify-center rounded-sm border border-transparent transition-all shrink-0",
                 isActive
                   ? "bg-white/5 border-white/10 text-[#A855F7]"
                   : "text-white/50 hover:text-white/80 hover:bg-white/[0.04]"
               )}
             >
-              <Icon className="w-5 h-5" />
+              <Icon className="w-5 h-5 shrink-0" />
             </Link>
           );
         })}
       </nav>
 
-      {/* User */}
+      {/* User - same width/center as logo and nav */}
       {accountId && (
-        <div className="p-3 border-t border-white/[0.06] flex justify-center">
+        <div className="w-full p-3 border-t border-white/[0.06] flex items-center justify-center">
           <div
-            className="w-8 h-8 rounded-sm border border-white/10 bg-white/5 flex items-center justify-center"
+            className="w-10 h-10 rounded-sm border border-white/10 bg-white/5 flex items-center justify-center shrink-0"
             title={accountId}
           >
-            <span className="text-[10px] font-mono font-medium text-white/90">
+            <span className="text-xs font-mono font-medium text-white/90 leading-none">
               {accountId.substring(0, 1).toUpperCase()}
             </span>
           </div>

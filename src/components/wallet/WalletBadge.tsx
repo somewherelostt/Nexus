@@ -44,24 +44,24 @@ export function WalletBadge() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-3 bg-[var(--origin-surface)] border border-white/[0.08] rounded-sm pl-3 pr-2 py-2 h-10 hover:border-white/20 transition-colors focus:outline-none focus:ring-1 focus:ring-white/20"
+        className="flex items-center gap-3 bg-[var(--origin-surface)] border border-white/[0.08] rounded-sm pl-3 pr-2 h-10 hover:border-white/20 transition-colors focus:outline-none focus:ring-1 focus:ring-white/20 min-w-0"
         aria-expanded={open}
         aria-haspopup="true"
         aria-label="Wallet menu"
       >
-        <span className="font-mono text-xs text-white/90 token-amount">
+        <span className="font-mono text-xs text-white/90 token-amount leading-none py-2">
           {balance != null ? Number(balance).toFixed(2) : "0"} NEAR
         </span>
-        <div className="h-4 w-px bg-white/10" />
-        <div className="flex items-center gap-1.5">
+        <div className="h-4 w-px bg-white/10 self-center shrink-0" aria-hidden />
+        <div className="flex items-center gap-1.5 shrink-0">
           <span className="relative flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
-          <span className="font-mono text-[10px] uppercase tracking-widest text-white/50">Testnet</span>
+          <span className="font-mono text-[10px] uppercase tracking-widest text-white/50 leading-none">Testnet</span>
         </div>
-        <div className="h-4 w-px bg-white/10" />
-        <span className="font-mono text-xs text-white/60">
+        <div className="h-4 w-px bg-white/10 self-center shrink-0" aria-hidden />
+        <span className="font-mono text-xs text-white/60 leading-none truncate max-w-[4.5rem]">
           {truncateAddress(accountId, 6)}
         </span>
-        <span className={`p-1 transition-transform ${open ? "rotate-180" : ""}`}>
+        <span className={`shrink-0 p-1 transition-transform ${open ? "rotate-180" : ""}`}>
           <ChevronDown className="w-4 h-4 text-white/50" />
         </span>
       </button>

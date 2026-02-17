@@ -186,11 +186,15 @@ export function ChatInterface() {
         }, 1500);
     };
 
-    const makeTxConfirmHandler = (data: { action?: string; amount?: string; recipient?: string; token?: string } | null) => async (): Promise<string | void> => {
-        if (!selector || !data?.amount) return;
-        const receiverId = data.recipient || (data.action === "SWAP" ? (NEAR_CONTRACT_ID || "wrap.testnet") : undefined);
+    const makeTxConfirmHandler = (data: { action?: string; amount?: string; recipient?: string; token?: string } | null) => async (recipientOverride?: string, amountOverride?: string): Promise<string | void> => {
+        if (!selector) return;
+        const receiverId =
+            recipientOverride?.trim() ||
+            (data?.recipient && data.recipient !== "[address]" && !/^\[.+\]$/.test(data.recipient.trim()) ? data.recipient : undefined) ||
+            (data?.action === "SWAP" ? (NEAR_CONTRACT_ID || "wrap.testnet") : undefined);
         if (!receiverId) return;
-        const amt = parseFloat(data.amount || "0");
+        const amountStr = amountOverride?.trim() || data?.amount || "0";
+        const amt = parseFloat(amountStr);
         if (isNaN(amt) || amt <= 0) return;
         const wallet = await selector.wallet();
         const amountYocto = BigInt(Math.floor(amt * 1e24)).toString();
@@ -210,37 +214,37 @@ export function ChatInterface() {
     };
 
     return (
-        <div className="flex h-[calc(100vh-8rem)] gap-0 bg-[var(--origin-background)]">
+        <div className="flex flex-1 min-h-0 gap-0 bg-[var(--origin-background)]">
             {/* Chat Area */}
             <div className={cn(
-                "flex flex-col h-full transition-all duration-500 bg-[var(--origin-background)]",
+                "flex flex-col min-h-0 flex-1 transition-all duration-500 bg-[var(--origin-background)]",
                 showIntents ? "w-[70%]" : "w-full max-w-4xl mx-auto"
             )}>
-                {/* Messages */}
-                <div className="flex-1 overflow-y-auto space-y-6 px-6 pt-6 pb-4">
+                {/* Messages - scrollable */}
+                <div className="flex-1 min-h-0 overflow-y-auto space-y-6 px-6 pt-6 pb-4">
                     {messages.map((msg) => (
                         <motion.div
                             key={msg.id}
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             className={cn(
-                                "flex gap-3 max-w-[85%]",
+                                "flex gap-3 max-w-[85%] items-start",
                                 msg.role === "user" ? "ml-auto flex-row-reverse" : "mr-auto"
                             )}
                         >
                             {msg.role === "ai" && (
-                                <div className="w-8 h-8 rounded-sm border border-white/10 bg-white/5 flex items-center justify-center shrink-0">
+                                <div className="w-8 h-8 rounded-sm border border-white/10 bg-white/5 flex items-center justify-center shrink-0 mt-0.5">
                                     <Bot className="w-4 h-4 text-[#A855F7]" />
                                 </div>
                             )}
-                            <div className={cn("min-w-0", msg.role === "user" && "flex justify-end")}>
+                            <div className={cn("min-w-0 flex-1", msg.role === "user" && "flex justify-end")}>
                                 {msg.type === "text" && (
                                     <div
                                         className={cn(
-                                            "py-2",
+                                            "py-2 leading-relaxed",
                                             msg.role === "user"
                                                 ? "font-mono text-xs text-white/90 text-right"
-                                                : "border-l-2 border-[#A855F7] pl-4 text-sm text-white/85 leading-relaxed"
+                                                : "border-l-2 border-[#A855F7] pl-4 text-sm text-white/85"
                                         )}
                                     >
                                         {msg.content}
@@ -265,11 +269,11 @@ export function ChatInterface() {
                     ))}
 
                     {isTyping && (
-                        <div className="flex gap-3 mr-auto max-w-[90%]">
+                        <div className="flex gap-3 mr-auto max-w-[90%] items-center">
                             <div className="w-8 h-8 rounded-sm border border-white/10 bg-white/5 flex items-center justify-center shrink-0">
                                 <Bot className="w-4 h-4 text-[#A855F7]" />
                             </div>
-                            <div className="h-8 flex items-center gap-1 border-l-2 border-[#A855F7] pl-4">
+                            <div className="h-8 flex items-center gap-1 border-l-2 border-[#A855F7] pl-4 min-w-[4rem]">
                                 <span className="loader-pulse-bar w-16" />
                             </div>
                         </div>
@@ -277,20 +281,42 @@ export function ChatInterface() {
                     <div ref={messagesEndRef} />
                 </div>
 
-                {/* CLI-style Input */}
-                <div className="p-4 border-t border-white/[0.06] bg-[var(--origin-background)]">
-                    <div className="max-w-4xl mx-auto flex items-center bg-[#050505] border border-white/[0.08] rounded-sm focus-within:border-white/20 transition-colors">
-                        <span className="pl-4 font-mono text-xs text-white/40 select-none">$</span>
+                {/* Starter prompts when only welcome message */}
+                {messages.length === 1 && (
+                    <div className="px-6 pb-3 flex-shrink-0">
+                        <p className="font-mono text-[10px] uppercase tracking-widest text-white/40 mb-2">Try</p>
+                        <div className="flex flex-wrap gap-2">
+                            {STARTER_PROMPTS.slice(0, 4).map((prompt) => (
+                                <button
+                                    key={prompt}
+                                    type="button"
+                                    onClick={() => handleSendMessage(prompt)}
+                                    className="font-mono text-xs px-3 py-2 rounded-sm border border-white/10 text-white/70 hover:border-[#A855F7]/40 hover:text-white hover:bg-white/5 transition-colors text-left"
+                                >
+                                    {prompt}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* CLI-style Input - always visible at bottom */}
+                <div className="flex-shrink-0 p-4 pt-3 border-t border-white/[0.06] bg-[var(--origin-background)]">
+                    <label className="sr-only" htmlFor="chat-input">Type your command</label>
+                    <div className="max-w-4xl mx-auto flex items-center bg-[#0A0A0A] border border-white/[0.12] rounded-sm focus-within:border-[#A855F7]/50 focus-within:shadow-[0_0_0_1px_rgba(168,85,247,0.3)] transition-all">
+                        <span className="pl-4 font-mono text-xs text-white/50 select-none">$</span>
                         <input
+                            id="chat-input"
                             type="text"
                             value={inputValue}
                             onChange={(e) => setInputValue(e.target.value)}
                             onKeyDown={(e) => e.key === "Enter" && handleSendMessage(inputValue)}
                             placeholder={PLACEHOLDERS[currentPlaceholder]}
                             className={cn(
-                                "flex-1 bg-transparent border-none px-2 py-3.5 text-sm text-white placeholder:text-white/30 focus:ring-0 focus:outline-none font-mono",
+                                "flex-1 bg-transparent border-none px-2 py-3.5 text-sm text-white placeholder:text-white/40 focus:ring-0 focus:outline-none font-mono",
                                 !inputValue && "caret-blink"
                             )}
+                            autoFocus
                         />
                         <div className="pr-2 flex items-center gap-1">
                             <button
