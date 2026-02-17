@@ -15,6 +15,11 @@ export interface NovaTransaction {
   ipfs_hash: string;
 }
 
+/** NOVA expects a NEAR account ID (e.g. alice.testnet), not an EVM address. */
+export function isEvmAddress(accountId: string): boolean {
+  return /^0x[a-fA-F0-9]{40}$/.test(accountId.trim());
+}
+
 export function getVaultGroupId(accountId: string): string {
   const safe = accountId.replace(/[^a-zA-Z0-9._-]/g, "_");
   return `${NEXUS_VAULT_GROUP_PREFIX}-${safe}`.slice(0, 64);

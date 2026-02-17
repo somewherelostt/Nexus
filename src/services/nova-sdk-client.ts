@@ -1,30 +1,14 @@
 /**
- * NOVA SDK client — uses nova-sdk-js for real upload/list/retrieve.
- * Requires NOVA API key from https://nova-sdk.com (Manage Account).
- * Encryption, IPFS upload, and NEAR recording are done by the SDK/MCP.
+ * NOVA vault client — calls Next.js API routes so auth runs server-side (avoids CORS).
+ * Set NOVA_API_KEY in .env (server-only). Get key at https://nova-sdk.com
  */
 
-import { NovaSdk, NovaError } from "nova-sdk-js";
-import { Buffer } from "buffer";
-import { NEAR_NODE_URL } from "@/config/near";
 import { getVaultGroupId } from "@/lib/vault-nova";
-
-const NOVA_API_KEY = process.env.NEXT_PUBLIC_NOVA_API_KEY ?? "";
-const NOVA_CONTRACT_ID =
-  process.env.NEXT_PUBLIC_NOVA_CONTRACT_ID?.trim() || "nova-sdk.near";
-
-export type { NovaError };
 
 export interface NovaUploadResult {
   cid: string;
   trans_id: string;
   file_hash: string;
-}
-
-export interface NovaRetrieveResult {
-  data: Buffer;
-  ipfs_hash: string;
-  group_id: string;
 }
 
 export interface NovaTransaction {
@@ -34,87 +18,88 @@ export interface NovaTransaction {
   ipfs_hash: string;
 }
 
-let sdkInstance: NovaSdk | null = null;
-let sdkAccountId: string | null = null;
+let configCache: { enabled: boolean } | null = null;
 
 /**
- * Get a NovaSdk instance for the given NEAR account.
- * Uses API key from NEXT_PUBLIC_NOVA_API_KEY (obtain at nova-sdk.com).
+ * Whether NOVA is configured (server has NOVA_API_KEY). Cached.
  */
-export function getNovaSdk(accountId: string): NovaSdk | null {
-  if (!NOVA_API_KEY?.trim()) return null;
-  if (sdkInstance && sdkAccountId === accountId) return sdkInstance;
+export async function isNovaSdkAvailable(): Promise<boolean> {
+  if (configCache !== null) return configCache.enabled;
   try {
-    sdkInstance = new NovaSdk(accountId, {
-      apiKey: NOVA_API_KEY.trim(),
-      contractId: NOVA_CONTRACT_ID,
-      rpcUrl: NEAR_NODE_URL,
-    });
-    sdkAccountId = accountId;
-    return sdkInstance;
+    const res = await fetch("/api/nova/config");
+    const data = await res.json();
+    configCache = { enabled: !!data?.enabled };
+    return configCache.enabled;
   } catch {
-    return null;
+    configCache = { enabled: false };
+    return false;
   }
 }
 
-export function isNovaSdkAvailable(): boolean {
-  return !!NOVA_API_KEY?.trim();
+/**
+ * Sync check for UI that already fetched config (e.g. from React Query).
+ */
+export function getNovaConfigCache(): boolean | null {
+  return configCache?.enabled ?? null;
+}
+
+export function setNovaConfigCache(enabled: boolean): void {
+  configCache = { enabled };
 }
 
 /**
- * Ensure the vault group exists, then upload file via NOVA SDK.
- * File is encrypted by the SDK and stored via NOVA (IPFS + NEAR).
+ * Upload file via NOVA (API route runs SDK server-side).
  */
 export async function uploadWithNovaSdk(
   accountId: string,
   file: File
 ): Promise<NovaUploadResult> {
-  const sdk = getNovaSdk(accountId);
-  if (!sdk) {
-    throw new Error(
-      "NOVA SDK is not configured. Add NEXT_PUBLIC_NOVA_API_KEY from nova-sdk.com to use Encrypt & Store."
-    );
+  const formData = new FormData();
+  formData.set("accountId", accountId);
+  formData.set("file", file);
+  const res = await fetch("/api/nova/upload", {
+    method: "POST",
+    body: formData,
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data?.error ?? "Upload failed");
   }
-  const groupId = getVaultGroupId(accountId);
-  try {
-    await sdk.registerGroup(groupId);
-  } catch {
-    // Group may already exist
-  }
-  const arrayBuffer = await file.arrayBuffer();
-  const buffer = Buffer.from(new Uint8Array(arrayBuffer));
-  return sdk.upload(groupId, buffer, file.name);
+  return data as NovaUploadResult;
 }
 
 /**
- * List files in the vault group via NOVA SDK (same data as on-chain).
+ * List vault files via NOVA API.
  */
 export async function listVaultWithNovaSdk(
   accountId: string
 ): Promise<NovaTransaction[]> {
-  const sdk = getNovaSdk(accountId);
-  if (!sdk) return [];
-  const groupId = getVaultGroupId(accountId);
-  try {
-    return sdk.getTransactionsForGroup(groupId, accountId);
-  } catch {
-    return [];
-  }
+  const res = await fetch(
+    `/api/nova/list?${new URLSearchParams({ accountId })}`
+  );
+  const data = await res.json();
+  if (!res.ok) return [];
+  return Array.isArray(data?.transactions) ? data.transactions : [];
 }
 
 /**
- * Retrieve and decrypt a file via NOVA SDK.
+ * Retrieve and download a file. Returns blob URL for download.
  */
 export async function retrieveWithNovaSdk(
   accountId: string,
   groupId: string,
   ipfsHash: string
-): Promise<NovaRetrieveResult> {
-  const sdk = getNovaSdk(accountId);
-  if (!sdk) {
-    throw new Error(
-      "NOVA SDK is not configured. Add NEXT_PUBLIC_NOVA_API_KEY to view files."
-    );
+): Promise<Blob> {
+  const res = await fetch("/api/nova/retrieve", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ accountId, groupId, ipfsHash }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error((err as { error?: string })?.error ?? "Retrieve failed");
   }
-  return sdk.retrieve(groupId, ipfsHash);
+  return res.blob();
 }
+
+export { getVaultGroupId };

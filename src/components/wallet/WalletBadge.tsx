@@ -50,13 +50,8 @@ export function WalletBadge() {
         aria-label="Wallet menu"
       >
         <span className="font-mono text-xs text-white/90 token-amount leading-none py-2">
-          {balance != null ? Number(balance).toFixed(2) : "0"} NEAR
+          {balance != null ? Number(balance).toFixed(2) : "0.00"}
         </span>
-        <div className="h-4 w-px bg-white/10 self-center shrink-0" aria-hidden />
-        <div className="flex items-center gap-1.5 shrink-0">
-          <span className="relative flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
-          <span className="font-mono text-[10px] uppercase tracking-widest text-white/50 leading-none">Testnet</span>
-        </div>
         <div className="h-4 w-px bg-white/10 self-center shrink-0" aria-hidden />
         <span className="font-mono text-xs text-white/60 leading-none truncate max-w-[4.5rem]">
           {truncateAddress(accountId, 6)}

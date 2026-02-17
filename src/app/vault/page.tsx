@@ -9,6 +9,7 @@ import {
   vaultKeyFingerprint,
   truncateHash,
   fetchVaultTransactions,
+  isEvmAddress,
   type NovaTransaction,
 } from "@/lib/vault-nova";
 import {
@@ -275,7 +276,15 @@ function MemoryBlocksList({
   );
 }
 
-function UploadPanel({ onEncryptStore, disabled }: { onEncryptStore: () => void; disabled?: boolean }) {
+function UploadPanel({
+  onEncryptStore,
+  disabled,
+  needsNearWallet,
+}: {
+  onEncryptStore: () => void;
+  disabled?: boolean;
+  needsNearWallet?: boolean;
+}) {
   const [drag, setDrag] = useState(false);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
@@ -325,7 +334,9 @@ function UploadPanel({ onEncryptStore, disabled }: { onEncryptStore: () => void;
           Photo / Document / Note / Dataset
         </p>
         <p className="mt-2 max-w-[220px] text-center text-xs" style={{ color: MUTED }}>
-          Files are encrypted before upload via NOVA.
+          {needsNearWallet
+            ? "Connect a NEAR wallet to use Encrypt & Store."
+            : "Files are encrypted before upload via NOVA."}
         </p>
       </div>
       <button
@@ -384,7 +395,18 @@ export default function VaultPage() {
 
   const groupId = accountId ? getVaultGroupId(accountId) : "";
   const keyFingerprint = accountId ? vaultKeyFingerprint(accountId) : "—";
-  const useSdk = isNovaSdkAvailable();
+
+  const { data: novaConfig } = useQuery({
+    queryKey: ["nova-config"],
+    queryFn: async () => {
+      const res = await fetch("/api/nova/config");
+      const data = await res.json();
+      return data as { enabled: boolean };
+    },
+  });
+  const useSdk = novaConfig?.enabled ?? false;
+  const isEvmWallet = accountId ? isEvmAddress(accountId) : false;
+  const vaultNeedsNear = !!accountId && isEvmWallet;
 
   const { data: transactions = [], isLoading: txLoading } = useQuery({
     queryKey: ["vault-transactions", accountId, useSdk],
@@ -411,8 +433,12 @@ export default function VaultPage() {
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (!file || !accountId) return;
+      if (vaultNeedsNear) {
+        setUploadError("NOVA vault requires a NEAR account. Connect a NEAR wallet (e.g. My Near Wallet) to use Encrypt & Store.");
+        return;
+      }
       if (!useSdk) {
-        setUploadError("Set NEXT_PUBLIC_NOVA_API_KEY (from nova-sdk.com) to use Encrypt & Store.");
+        setUploadError("Set NOVA_API_KEY in .env (from nova-sdk.com) to use Encrypt & Store.");
         return;
       }
       setUploading(true);
@@ -428,13 +454,18 @@ export default function VaultPage() {
         if (fileInputRef.current) fileInputRef.current.value = "";
       }
     },
-    [accountId, useSdk, queryClient]
+    [accountId, useSdk, vaultNeedsNear, queryClient]
   );
 
   const handleView = useCallback(
     async (tx: NovaTransaction) => {
-      if (!accountId || !useSdk) {
-        setViewError("NOVA API key required to view files. Add NEXT_PUBLIC_NOVA_API_KEY.");
+      if (!accountId || vaultNeedsNear) {
+        setViewError("NOVA vault requires a NEAR account. Connect a NEAR wallet to view files.");
+        setViewingTx(tx);
+        return;
+      }
+      if (!useSdk) {
+        setViewError("NOVA API key required to view files. Set NOVA_API_KEY in .env.");
         setViewingTx(tx);
         return;
       }
@@ -446,8 +477,7 @@ export default function VaultPage() {
       setViewingTx(tx);
       setViewError(null);
       try {
-        const { data } = await retrieveWithNovaSdk(accountId, tx.group_id, tx.ipfs_hash);
-        const blob = new Blob([data]);
+        const blob = await retrieveWithNovaSdk(accountId, tx.group_id, tx.ipfs_hash);
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
@@ -459,7 +489,7 @@ export default function VaultPage() {
         setViewError(err instanceof Error ? err.message : "Retrieve failed.");
       }
     },
-    [accountId, useSdk]
+    [accountId, useSdk, vaultNeedsNear]
   );
 
   const handleShare = (_tx: NovaTransaction) => {
@@ -495,7 +525,11 @@ export default function VaultPage() {
             />
           </div>
           <div className="lg:max-w-sm">
-            <UploadPanel onEncryptStore={handleEncryptStore} disabled={!accountId || !useSdk} />
+            <UploadPanel
+              onEncryptStore={handleEncryptStore}
+              disabled={!accountId || !useSdk || vaultNeedsNear}
+              needsNearWallet={vaultNeedsNear}
+            />
           </div>
         </div>
 
@@ -571,9 +605,11 @@ export default function VaultPage() {
               <p className="text-sm text-red-400">{uploadError}</p>
             )}
             <p className="text-xs" style={{ color: MUTED }}>
-              {useSdk
-                ? "Files are encrypted and stored via NOVA SDK (IPFS + NEAR)."
-                : "Set NEXT_PUBLIC_NOVA_API_KEY from nova-sdk.com to enable Encrypt & Store."}
+              {vaultNeedsNear
+                ? "NOVA vault requires a NEAR account. Connect a NEAR wallet (e.g. My Near Wallet)."
+                : useSdk
+                  ? "Files are encrypted and stored via NOVA SDK (IPFS + NEAR)."
+                  : "Set NOVA_API_KEY in .env (from nova-sdk.com) to enable Encrypt & Store."}
             </p>
           </div>
           <DialogFooter>
