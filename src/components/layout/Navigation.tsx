@@ -1,30 +1,34 @@
 "use client";
 
 import { useWallet } from "@/context/WalletContext";
-import { Button } from "@/components/ui/button";
+import { NexusButton } from "@/components/ui/NexusButton";
+import Link from "next/link";
 
 export function Navigation() {
   const { accountId, signIn, signOut } = useWallet();
 
   return (
-    <nav className="flex items-center justify-between p-4 border-b border-border bg-background/50 backdrop-blur-md sticky top-0 z-50">
-      <div className="text-xl font-bold bg-gradient-to-r from-cyan-400 to-purple-600 bg-clip-text text-transparent">
-        NexusAI
-      </div>
+    <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 bg-background/80 backdrop-blur-md border-b border-white/5">
+      <Link href="/" className="text-xl font-medium tracking-tight hover:opacity-80 transition-opacity">
+        Nexus<span className="text-accent">AI</span>
+      </Link>
+      
       <div className="flex items-center gap-4">
         {accountId ? (
           <div className="flex items-center gap-4">
-             <div className="text-sm font-mono text-muted-foreground">
+             <div className="text-sm font-mono text-muted-foreground/80 px-3 py-1 bg-white/5 rounded-full border border-white/5">
                 {accountId}
              </div>
-             <Button variant="outline" onClick={signOut}>
+             <NexusButton variant="secondary" size="sm" onClick={signOut}>
                 Disconnect
-             </Button>
+             </NexusButton>
           </div>
         ) : (
-          <Button variant="neon" onClick={signIn}>
-            Connect Wallet
-          </Button>
+          <Link href="/chat">
+            <NexusButton variant="primary" size="sm" onClick={signIn} className="shadow-nexus-glow-sm">
+              Launch Assistant
+            </NexusButton>
+          </Link>
         )}
       </div>
     </nav>

@@ -68,18 +68,24 @@ export function useChat() {
     if (!pendingAction) return;
     
     setShowPreview(false);
-    addMessage("system", `Initiating ${pendingAction.type} on ${pendingAction.params.chain}...`);
+    addMessage("system", `Initiating ${pendingAction.type}...`);
     
     try {
-        // Real MPC Execution
-        addMessage("system", "Requesting signature from NEAR MPC Enclave...");
+        let resultHash;
+
+        if (pendingAction.type === "DEPLOY_AGENT" || pendingAction.type === "AGENT_ACTION") {
+            addMessage("system", "Interacting with Shade Agent Service...");
+            resultHash = await aiService.executeAgentIntent(pendingAction);
+            addMessage("assistant", `✅ Agent Action Successful!`);
+        } else {
+            // Real MPC Execution
+            addMessage("system", "Requesting signature from NEAR MPC Enclave...");
+            // This triggers the wallet popup for the user to sign the NEAR transaction
+            resultHash = await nearService.executeMPCAction(pendingAction);
+             addMessage("assistant", `✅ Execution Confirmed on NEAR. Relaying to ${pendingAction.params.chain}...`);
+        }
         
-        // This triggers the wallet popup for the user to sign the NEAR transaction
-        // that requests the MPC signature.
-        const txHash = await nearService.executeMPCAction(pendingAction);
-        
-        addMessage("assistant", `✅ Execution Confirmed on NEAR. Relaying to ${pendingAction.params.chain}...`);
-        addMessage("system", `Chain Signature Generated. Transaction Hash: ${txHash}`);
+        addMessage("system", `Transaction Hash: ${resultHash}`);
         
     } catch (e: any) {
         console.error(e);

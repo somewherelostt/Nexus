@@ -9,6 +9,9 @@ const config: Config = {
   ],
   theme: {
   	extend: {
+      fontFamily: {
+        sans: ["var(--font-inter)", "sans-serif"],
+      },
   		colors: {
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
@@ -34,13 +37,14 @@ const config: Config = {
   			},
   			accent: {
   				DEFAULT: 'hsl(var(--accent))',
-  				foreground: 'hsl(var(--accent-foreground))'
+  				foreground: 'hsl(var(--accent-foreground))',
+          glow: 'hsl(var(--accent-glow))',
   			},
   			destructive: {
   				DEFAULT: 'hsl(var(--destructive))',
   				foreground: 'hsl(var(--destructive-foreground))'
   			},
-  			border: 'hsl(var(--border))',
+  			border: 'hsl(var(--border, 0 0% 100% / 0.1))', // Fallback
   			input: 'hsl(var(--input))',
   			ring: 'hsl(var(--ring))',
   			chart: {
@@ -55,7 +59,15 @@ const config: Config = {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
   			sm: 'calc(var(--radius) - 4px)'
-  		}
+  		},
+      backgroundImage: {
+        'nexus-gradient': 'linear-gradient(to right, #6C5CE7, #00D4FF, #9B5CFF)',
+        'nexus-radial': 'radial-gradient(circle at 50% 0%, rgba(108,92,231,0.25), transparent 60%)',
+      },
+      boxShadow: {
+        'nexus-glow': '0 0 20px rgba(108, 92, 231, 0.4)',
+        'nexus-glow-sm': '0 0 10px rgba(108, 92, 231, 0.3)',
+      }
   	}
   },
   plugins: [require("tailwindcss-animate")],

@@ -4,43 +4,56 @@
 
 @layer base {
   :root {
-    --background: 260 50% 10%;
-    --foreground: 210 40% 98%;
-
-    --card: 260 50% 15%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 260 50% 15%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 263 70% 50%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 217 19% 27%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217 19% 27%;
-    --muted-foreground: 215 20% 65%;
-
-    --accent: 180 100% 50%;
-    --accent-foreground: 222 47% 11%;
-
+    /* Base Colors - Always Dark */
+    --background: 0 0% 0%; /* #000000 */
+    --foreground: 0 0% 100%; /* #FFFFFF */
+    
+    --card: 240 10% 3.9%; /* #0A0A0F */
+    --card-foreground: 0 0% 100%; /* #FFFFFF */
+ 
+    --popover: 240 10% 4%; /* #0B0B0F - Secondary BG */
+    --popover-foreground: 0 0% 100%; /* #FFFFFF */
+ 
+    --primary: 0 0% 100%; /* #FFFFFF */
+    --primary-foreground: 240 5.9% 10%; /* Inverted text */
+ 
+    --secondary: 240 5% 15%; /* #0A0A0F */
+    --secondary-foreground: 0 0% 100%; /* #FFFFFF */
+ 
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%; /* rgba(255,255,255,0.65) equivalent */
+ 
+    --accent: 258 74% 63%; /* #6C5CE7 - Primary Accent */
+    --accent-foreground: 0 0% 100%;
+    
+    --accent-glow: 190 100% 50%; /* #00D4FF - Secondary Accent Gradient */
+ 
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 217 19% 27%;
-    --input: 217 19% 27%;
-    --ring: 263 70% 50%;
-
-    --radius: 0.5rem;
+    --border: 0 0% 100% / 0.08; /* rgba(255,255,255,0.08) */
+    --input: 0 0% 100% / 0.08; /* rgba(255,255,255,0.08) */
+    --ring: 258 74% 63%; /* #6C5CE7 */
+ 
+    --radius: 0.75rem; /* 12px roughly, will use 20px/14px specifically in components */
   }
 }
-
+ 
 @layer base {
   * {
     @apply border-border;
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .glow-text {
+    text-shadow: 0 0 20px rgba(108, 92, 231, 0.5);
+  }
+  
+  .glow-box {
+    box-shadow: 0 0 40px -10px rgba(108, 92, 231, 0.3);
   }
 }

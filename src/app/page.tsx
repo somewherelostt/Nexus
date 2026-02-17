@@ -1,9 +1,9 @@
-import { ChatInterface } from "@/components/features/ChatInterface";
+import { HeroSection } from "@/components/sections/HeroSection";
 
 export default function Home() {
   return (
-    <div className="flex min-h-[calc(100vh-80px)] items-center justify-center">
-       <ChatInterface />
-    </div>
+    <main className="flex flex-col min-h-screen">
+       <HeroSection />
+    </main>
   );
 }

@@ -1,130 +1,166 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Card } from "@/components/ui/card";
-import { Send, Cpu, ShieldCheck } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { NexusButton } from "@/components/ui/NexusButton";
+import { GlowCard } from "@/components/ui/GlowCard";
+import { Send, Cpu, Zap, ShieldCheck, Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useWallet } from "@/context/WalletContext";
 
-import { ActionPreview } from "@/components/features/ActionPreview";
-import { AttestationBadge } from "@/components/features/AttestationBadge";
-import { useChat } from "@/hooks/useChat";
+interface Message {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  timestamp: number;
+}
 
 export function ChatInterface() {
-  const { accountId, signIn } = useWallet();
-  const { 
-      messages, 
-      isProcessing, 
-      handleSend: onSend, 
-      pendingAction, 
-      showPreview, 
-      setShowPreview, 
-      confirmAction, 
-      rejectAction 
-  } = useChat();
-  
   const [input, setInput] = useState("");
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollIntoView({ behavior: "smooth" });
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: "1",
+      role: "assistant",
+      content: "Nexus Protocol initialized. Secure environment active. How can I assist with your multi-chain execution today?",
+      timestamp: Date.now()
     }
-  }, [messages, isProcessing]);
+  ]);
+  const [isTyping, setIsTyping] = useState(false);
 
-  const handleSubmit = async () => {
+  const handleSend = () => {
     if (!input.trim()) return;
-    if (!accountId) {
-        signIn();
-        return;
-    }
-    await onSend(input);
+    
+    const newMessage: Message = {
+      id: Date.now().toString(),
+      role: "user",
+      content: input,
+      timestamp: Date.now()
+    };
+    
+    setMessages(prev => [...prev, newMessage]);
     setInput("");
+    setIsTyping(true);
+    
+    // Simulate response (placeholder)
+    setTimeout(() => {
+      setIsTyping(false);
+      setMessages(prev => [...prev, {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: "I've analyzed your request. To proceed, I need to confirm the destination chain and gas parameters.",
+        timestamp: Date.now()
+      }]);
+    }, 1500);
   };
 
   return (
-    <div className="flex flex-col h-[85vh] w-full max-w-4xl mx-auto gap-4">
-      <Card className="flex-1 bg-background/60 backdrop-blur-xl border-accent/20 flex flex-col overflow-hidden shadow-2xl shadow-purple-900/10">
-        <div className="p-4 border-b border-accent/10 flex justify-between items-center bg-accent/5">
-             <div className="flex items-center gap-2 text-accent">
-                <Cpu className="w-4 h-4 animate-pulse" />
-                <span className="text-xs font-mono tracking-wider">SECURE_ENCLAVE_ACTIVE</span>
-             </div>
-             <AttestationBadge attestationId="0x9a8f...3d2" />
-        </div>
-        
-        <ScrollArea className="flex-1 p-4">
-          <div className="space-y-4">
-            {messages.map((msg) => (
+    <section className="container mx-auto max-w-7xl pt-8 pb-20 px-4 md:px-0 h-[85vh] flex gap-6">
+      
+      {/* LEFT: Chat Thread */}
+      <div className="w-full md:w-[65%] flex flex-col h-full">
+        {/* Messages Area */}
+        <div className="flex-1 overflow-y-auto space-y-6 pr-4 scrollbar-thin scrollbar-thumb-accent/20 scrollbar-track-transparent">
+          {messages.map((msg) => (
+            <motion.div
+              key={msg.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={cn(
+                "flex w-full",
+                msg.role === "user" ? "justify-end" : "justify-start"
+              )}
+            >
               <div
-                key={msg.id}
                 className={cn(
-                  "flex w-full",
-                  msg.role === "user" ? "justify-end" : "justify-start"
+                  "max-w-[80%] p-4 rounded-xl text-sm leading-relaxed",
+                  msg.role === "user" 
+                    ? "bg-secondary/50 text-foreground rounded-tr-sm border border-white/5" 
+                    : "bg-accent/5 text-foreground border border-accent/10 rounded-tl-sm shadow-[0_0_15px_rgba(108,92,231,0.05)]"
                 )}
               >
-                <div
-                  className={cn(
-                    "max-w-[80%] rounded-2xl px-4 py-3 text-sm shadow-md",
-                    msg.role === "user"
-                      ? "bg-primary text-primary-foreground rounded-br-none"
-                      : msg.role === "system"
-                      ? "bg-red-500/10 text-red-500 border border-red-500/20 italic"
-                      : "bg-muted/50 text-foreground border border-accent/10 rounded-bl-none"
-                  )}
-                >
-                  {msg.content}
-                </div>
+                {msg.content}
               </div>
-            ))}
-            {isProcessing && (
-                <div className="flex justify-start animate-pulse">
-                    <div className="bg-muted/30 text-muted-foreground rounded-2xl px-4 py-3 text-sm border border-accent/5">
-                        Processing secure inference...
-                    </div>
-                </div>
-            )}
-            <div ref={scrollRef} />
-          </div>
-        </ScrollArea>
+            </motion.div>
+          ))}
+          
+          {isTyping && (
+             <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex justify-start"
+            >
+              <div className="bg-accent/5 p-4 rounded-xl rounded-tl-sm border border-accent/10 flex gap-2 items-center">
+                <span className="w-1.5 h-1.5 bg-accent/50 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                <span className="w-1.5 h-1.5 bg-accent/50 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                <span className="w-1.5 h-1.5 bg-accent/50 rounded-full animate-bounce" />
+              </div>
+            </motion.div>
+          )}
+        </div>
 
-        <ActionPreview 
-            open={showPreview} 
-            onOpenChange={setShowPreview} 
-            plan={pendingAction} 
-            onConfirm={confirmAction} 
-            onReject={rejectAction} 
-        />
-
-        <div className="p-4 bg-background/40 border-t border-accent/10">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSubmit();
-            }}
-            className="flex gap-2"
-          >
-            <Input
+        {/* Input Area */}
+        <div className="mt-4 relative">
+          <div className="relative rounded-[16px] bg-secondary/30 border border-white/10 focus-within:border-accent/50 focus-within:shadow-nexus-glow-sm transition-all duration-300">
+            <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder={accountId ? "Try 'Send 0.1 ETH to alice.near'..." : "Connect wallet to start..."}
-              className="bg-background/50 border-accent/20 focus-visible:ring-accent"
-              disabled={isProcessing}
+              onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && (e.preventDefault(), handleSend())}
+              placeholder="Describe your intent..."
+              className="w-full bg-transparent p-4 min-h-[60px] max-h-[120px] resize-none focus:outline-none text-foreground placeholder:text-muted-foreground/50"
             />
-            <Button 
-                type="submit" 
-                variant="neon" 
-                size="icon"
-                disabled={(!input.trim() && !!accountId) || isProcessing}
-            >
-              <Send className="w-4 h-4" />
-            </Button>
-          </form>
+            <div className="absolute bottom-3 right-3">
+              <NexusButton 
+                variant="primary" 
+                size="icon" 
+                onClick={handleSend}
+                disabled={!input.trim()}
+                className="h-8 w-8 rounded-lg"
+              >
+                <Send className="w-4 h-4" />
+              </NexusButton>
+            </div>
+          </div>
         </div>
-      </Card>
-    </div>
+      </div>
+
+      {/* RIGHT: Context Panel */}
+      <div className="hidden md:flex w-[35%] flex-col gap-4">
+         {/* Status Cards */}
+         <GlowCard className="p-5" noHover>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-medium text-muted-foreground">System Status</h3>
+              <div className="flex items-center gap-2">
+                 <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.4)]" />
+                 <span className="text-xs text-emerald-500 font-mono">ONLINE</span>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+               <div className="p-3 rounded-lg bg-black/40 border border-white/5 flex flex-col gap-1">
+                  <div className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Cpu className="w-3 h-3" /> Compute
+                  </div>
+                  <span className="text-sm font-mono text-accent">TEE Active</span>
+               </div>
+               <div className="p-3 rounded-lg bg-black/40 border border-white/5 flex flex-col gap-1">
+                  <div className="text-xs text-muted-foreground flex items-center gap-1">
+                    <ShieldCheck className="w-3 h-3" /> Security
+                  </div>
+                  <span className="text-sm font-mono text-accent">Enclave OK</span>
+               </div>
+            </div>
+         </GlowCard>
+
+         {/* Execution Plan (Placeholder) */}
+         <div className="flex-1 rounded-[20px] border border-white/10 bg-card/50 p-5 backdrop-blur-sm">
+            <h3 className="text-sm font-medium text-muted-foreground mb-4">Execution Context</h3>
+            
+            <div className="flex flex-col items-center justify-center h-[200px] text-muted-foreground/40 text-sm border border-dashed border-white/10 rounded-xl bg-black/20">
+               <Activity className="w-8 h-8 mb-2 opacity-50" />
+               Waiting for intent...
+            </div>
+         </div>
+      </div>
+
+    </section>
   );
 }
